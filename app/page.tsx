@@ -93,8 +93,8 @@ const ButterflyAnimation = () => {
       "https://lottie.host/23faf74c-f8d6-41c9-b33b-7b32da954857/ASFfsY9qZW.lottie"
     ];
 
-    // Increased butterfly count for more visual impact
-    const butterflyCount = window.innerWidth < 768 ? 15 : 25;
+    // Optimized butterfly count for mobile performance
+    const butterflyCount = typeof window !== 'undefined' && window.innerWidth < 768 ? 8 : 25;
     
     const randomTarget = () => ({
       x: Math.random() * window.innerWidth,
@@ -131,7 +131,7 @@ const ButterflyAnimation = () => {
   useEffect(() => {
     let animationId: number;
     let lastTime = 0;
-    const targetFPS = 30; // Reduced from 60fps for better performance
+    const targetFPS = typeof window !== 'undefined' && window.innerWidth < 768 ? 20 : 30; // Even lower FPS on mobile for better performance
     const frameInterval = 1000 / targetFPS;
     
     const randomTarget = () => ({
@@ -306,8 +306,8 @@ const FallingLeaves = () => {
   const leavesContainerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
-    // Generate leaves with random properties
-    const leafCount = window.innerWidth < 768 ? 12 : 20;
+    // Generate leaves with random properties - reduced for mobile
+    const leafCount = typeof window !== 'undefined' && window.innerWidth < 768 ? 6 : 20;
     const newLeaves = Array.from({ length: leafCount }).map((_, index) => {
       const scale = 0.4 + Math.random() * 0.6;
       const leafType = Math.floor(Math.random() * 4); // 0, 1, 2, or 3 for different leaf icons
@@ -337,7 +337,7 @@ const FallingLeaves = () => {
     
     // Handle window resize
     const handleResize = () => {
-      const updatedLeafCount = window.innerWidth < 768 ? 12 : 20;
+      const updatedLeafCount = typeof window !== 'undefined' && window.innerWidth < 768 ? 6 : 20;
       if (leaves.length !== updatedLeafCount) {
         setLeaves(prev => {
           if (prev.length < updatedLeafCount) {
@@ -379,8 +379,13 @@ const FallingLeaves = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   
-  // Handle mouse movement to affect leaves
+  // Handle mouse movement to affect leaves (desktop only)
   useEffect(() => {
+    // Only add mouse listeners on desktop devices
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      return;
+    }
+    
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
     };
@@ -389,8 +394,15 @@ const FallingLeaves = () => {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
   
-  // Animate leaves based on mouse position using requestAnimationFrame for better performance
+  // Animate leaves based on mouse position using requestAnimationFrame for better performance (desktop only)
   const animate = (time: number) => {
+    // Skip mouse-based animation on mobile devices
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      previousTimeRef.current = time;
+      requestRef.current = requestAnimationFrame(animate);
+      return;
+    }
+    
     if (previousTimeRef.current !== undefined) {
       if (leavesContainerRef.current) {
         const container = leavesContainerRef.current;
@@ -619,8 +631,14 @@ export default function WeddingInvitation() {
   const [showScrollIndicator, setShowScrollIndicator] = useState(true)
   const [showConfetti, setShowConfetti] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const bgImageRef = useRef<HTMLImageElement | null>(null)
+
+  // Set mobile state after component mounts
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 768)
+  }, [])
 
   // Initialize audio
   useEffect(() => {
@@ -670,13 +688,20 @@ export default function WeddingInvitation() {
     
     // Defer heavy initialization to next frame
     const initializeApp = () => {
-      // Initialize AOS with reduced settings for better performance
+      // Initialize AOS with early trigger settings for better responsiveness
+      const mobileCheck = window.innerWidth < 768;
       AOS.init({
-        duration: 800, // Reduced from 1000
+        duration: mobileCheck ? 800 : 1000, // Slower, smoother animations
         once: false,
         mirror: true,
-        offset: 50,
-        disable: window.innerWidth < 768 ? 'mobile' : false, // Disable on mobile for performance
+        offset: mobileCheck ? 150 : 200, // Much larger offset - images appear earlier
+        disable: false, // Enable animations on all devices
+        useClassNames: false,
+        initClassName: 'aos-init',
+        animatedClassName: 'aos-animate',
+        disableMutationObserver: mobileCheck, // Disable mutation observer on mobile for better performance
+        debounceDelay: mobileCheck ? 30 : 0, // Reduced debounce for faster response
+        throttleDelay: mobileCheck ? 50 : 0, // Reduced throttle for faster response
       })
 
       // Force scroll to top on page load/refresh
@@ -1286,7 +1311,7 @@ export default function WeddingInvitation() {
               <div 
                 className="inline-block mb-4 sm:mb-6"
                 data-aos="zoom-in"
-                data-aos-delay="200"
+                data-aos-delay="100"
               >
                 <Heart className="h-8 w-8 sm:h-12 sm:w-12 text-[#2c5e1a] mx-auto animate-beat hover:text-[#87b577] transition-colors" />
               </div>
@@ -1294,7 +1319,7 @@ export default function WeddingInvitation() {
               <h1 
                 className="font-moul text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#2c5e1a] mb-4 sm:mb-6 forest-text-shadow px-4 sm:px-6 leading-relaxed"
                 data-aos="fade-up"
-                data-aos-delay="400"
+                data-aos-delay="200"
               >
                 អាពាហ៍ពិពាហ៍
               </h1>
@@ -1303,14 +1328,14 @@ export default function WeddingInvitation() {
                 <p 
                   className="font-moul text-2xl sm:text-3xl md:text-4xl text-[#2c5e1a] px-4"
                   data-aos="fade-up"
-                  data-aos-delay="600"
+                  data-aos-delay="300"
                 >
                   សំណាង & រ៉ូស្សា
                 </p>
                 <p 
                   className="font-moulpali text-xl sm:text-2xl md:text-3xl text-[#2c3e1a]"
                   data-aos="fade-up"
-                  data-aos-delay="800"
+                  data-aos-delay="400"
                 >
                   ១៦ មករា​ ២០២៦
                 </p>
@@ -1320,7 +1345,7 @@ export default function WeddingInvitation() {
               <div 
                 className="flex justify-center gap-2 sm:gap-4 mb-8 sm:mb-12"
                 data-aos="fade-up"
-                data-aos-delay="1000"
+                data-aos-delay="500"
               >
                 <div className="countdown-item bg-white/80 rounded-lg px-2 sm:px-4 py-2 sm:py-3 w-14 sm:w-16 text-center hover:bg-white/90 hover:shadow-lg transition-all transform hover:scale-110">
                   <p className="font-moul text-lg sm:text-xl text-[#2c5e1a]">{days}</p>
@@ -1344,7 +1369,7 @@ export default function WeddingInvitation() {
               <div 
                 className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4 lg:space-x-6 mb-12 sm:mb-16 px-4"
                 data-aos="fade-up"
-                data-aos-delay="1200"
+                data-aos-delay="600"
               >
                 <Button 
                   onClick={() => scrollToSection('events')} 
@@ -1393,8 +1418,8 @@ export default function WeddingInvitation() {
                 {photos.map((photo, index) => {
                   // Define animation pattern based on position
                   let animation;
-                  let duration = 800;
-                  let delay = index * 100;
+                  let duration = isMobile ? 700 : 900; // Slower, smoother animations
+                  let delay = index * 50; // Reduced delay for quicker appearance
 
                   // Pattern: left -> right -> zoom-in
                   switch (index % 3) {
@@ -1406,7 +1431,7 @@ export default function WeddingInvitation() {
                       break;
                     case 2:
                       animation = "zoom-in";
-                      duration = 1000;
+                      duration = isMobile ? 800 : 1000; // Slower, smoother zoom
                       break;
                   }
 
@@ -1418,8 +1443,9 @@ export default function WeddingInvitation() {
                           data-aos={animation}
                           data-aos-duration={duration}
                           data-aos-delay={delay}
-                          data-aos-anchor-placement="center-bottom"
+                          data-aos-anchor-placement="top-bottom"
                           data-aos-once="false"
+                          data-aos-offset="100"
                         >
                           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
                           <div className="absolute inset-0 border-4 border-[#87b577]/20 group-hover:border-[#87b577]/40 rounded-xl z-20 transition-colors"></div>
@@ -1481,7 +1507,7 @@ export default function WeddingInvitation() {
                     key={event.id}
                     className="relative"
                     data-aos="fade-up"
-                    data-aos-delay={index * 100}
+                    data-aos-delay={index * 50}
                   >
                     <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 hover:bg-white/90">
                       <h3 className="font-moul text-xl text-[#2c5e1a] mb-1">{event.title}</h3>
@@ -1579,7 +1605,7 @@ export default function WeddingInvitation() {
                 {/* Wish Form */}
                 <div
                   data-aos="fade-right"
-                  data-aos-duration="1000"
+                  data-aos-duration="1200"
                 >
                   <Card className="p-4 sm:p-6 border-[#87b577]/30 bg-white/70 backdrop-blur-sm transition-all duration-300 hover:bg-white/80 hover:shadow-xl">
                     <h3 className="font-moul text-lg sm:text-xl mb-4 sm:mb-6 text-[#1a4810] flex items-center drop-shadow-sm hover:text-[#87b577] transition-colors">
@@ -1661,7 +1687,7 @@ export default function WeddingInvitation() {
                 {/* Wishes List */}
                 <div
                   data-aos="fade-left"
-                  data-aos-duration="1000"
+                  data-aos-duration="1200"
                 >
                   <h3 className="font-moul text-xl mb-4 text-[#2c5e1a]">ពាក្យជូនពរពីភ្ញៀវ</h3>
                   <div className="space-y-4">
@@ -1670,7 +1696,7 @@ export default function WeddingInvitation() {
                         key={wish.id}
                         className="p-4 border-[#87b577]/30 bg-white/70 backdrop-blur-sm transition-all duration-500 hover:shadow-lg hover:scale-105 hover:border-[#87b577]"
                         data-aos="fade-up"
-                        data-aos-delay={index * 200}
+                        data-aos-delay={index * 100}
                       >
                         <p className="font-moulpali mb-2 hover:text-[#2c5e1a] transition-colors">{wish.message}</p>
                         <div className="flex items-center justify-between">

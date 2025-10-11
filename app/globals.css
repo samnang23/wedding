@@ -332,5 +332,58 @@
     background-color: hsl(var(--forest-dark));
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
+
+  /* Mobile optimization for animations */
+  @media (max-width: 767px) {
+    /* Reduce animation complexity on mobile */
+    .animate-beat {
+      animation: beat 3s ease-in-out infinite; /* Slower on mobile */
+    }
+    
+    .animate-sway {
+      animation: sway 4s ease-in-out infinite; /* Slower on mobile */
+    }
+    
+    .animate-float {
+      animation: float 5s ease-in-out infinite; /* Slower on mobile */
+    }
+    
+    /* Optimize AOS animations for mobile */
+    [data-aos] {
+      will-change: transform, opacity;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+    }
+    
+    /* Faster animation triggers for better responsiveness */
+    [data-aos] {
+      transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    
+    /* Gallery images appear earlier */
+    [data-aos*="fade-left"],
+    [data-aos*="fade-right"],
+    [data-aos*="zoom-in"] {
+      transition-duration: 0.4s !important;
+    }
+    
+    /* Reduce motion for users who prefer it */
+    @media (prefers-reduced-motion: reduce) {
+      [data-aos] {
+        animation: none !important;
+        transition: none !important;
+      }
+      
+      .animate-beat,
+      .animate-sway,
+      .animate-float,
+      .animate-glow,
+      .animate-pulse-slow {
+        animation: none !important;
+      }
+    }
+  }
 }
 
