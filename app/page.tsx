@@ -3,6 +3,7 @@
 import type React from "react"
 import AOS from 'aos'
 import 'aos/dist/aos.css'
+import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 
 interface WeddingEvent {
   id: string;
@@ -65,6 +66,236 @@ import {
   VolumeX,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+
+// Butterfly Animation Component using Dynamic Movement
+const ButterflyAnimation = () => {
+  const [butterflies, setButterflies] = useState<{
+    id: number;
+    x: number;
+    y: number;
+    angle: number;
+    size: number;
+    speed: number;
+    flutterPhase: number;
+    target: { x: number; y: number };
+    lottieSrc: string;
+    prevAngle: number;
+    rotationJitter: number;
+    isVisible: boolean;
+    spawnDelay: number;
+  }[]>([]);
+  
+  useEffect(() => {
+    // Array of butterfly Lottie URLs
+    const butterflyAssets = [
+      "https://lottie.host/f51692da-3be3-4bbf-89a4-46ad004f049c/0S5whrma8T.lottie",
+      "https://lottie.host/8ec1e0c7-ec95-4d35-a737-b8725f175919/DtIpkZi5lV.lottie",
+      "https://lottie.host/23faf74c-f8d6-41c9-b33b-7b32da954857/ASFfsY9qZW.lottie"
+    ];
+
+    // Increased butterfly count for more visual impact
+    const butterflyCount = window.innerWidth < 768 ? 15 : 25;
+    
+    const randomTarget = () => ({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight
+    });
+    
+    const newButterflies = Array.from({ length: butterflyCount }).map((_, index) => {
+      const size = 30 + Math.random() * 25; // Slightly smaller for better performance
+      const x = Math.random() * window.innerWidth;
+      const y = Math.random() * window.innerHeight;
+      const lottieSrc = butterflyAssets[Math.floor(Math.random() * butterflyAssets.length)];
+      
+      return {
+        id: index,
+        x,
+        y,
+        angle: 0,
+        size,
+        speed: 0.8 + Math.random() * 1.5, // Slightly slower for smoother animation
+        flutterPhase: Math.random() * Math.PI * 2,
+        target: randomTarget(),
+        lottieSrc,
+        prevAngle: 0,
+        rotationJitter: 0,
+        isVisible: true,
+        spawnDelay: Math.random() * 2000, // Staggered spawning
+      };
+    });
+    
+    setButterflies(newButterflies);
+  }, []);
+
+  // Animation loop with realistic movement and screen boundary handling
+  useEffect(() => {
+    let animationId: number;
+    let lastTime = 0;
+    const targetFPS = 30; // Reduced from 60fps for better performance
+    const frameInterval = 1000 / targetFPS;
+    
+    const randomTarget = () => ({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight
+    });
+    
+    const isOffScreen = (x: number, y: number, margin = 100) => {
+      return x < -margin || x > window.innerWidth + margin || 
+             y < -margin || y > window.innerHeight + margin;
+    };
+    
+    const animate = (currentTime: number) => {
+      if (currentTime - lastTime >= frameInterval) {
+        setButterflies(prevButterflies => 
+          prevButterflies.map(b => {
+            // Handle spawn delay
+            if (b.spawnDelay > 0) {
+              return { ...b, spawnDelay: b.spawnDelay - frameInterval };
+            }
+            
+            // Skip animation if not visible
+            if (!b.isVisible) {
+              return b;
+            }
+            
+            const dx = b.target.x - b.x;
+            const dy = b.target.y - b.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            let newTarget = b.target;
+            let newX = b.x;
+            let newY = b.y;
+            let newIsVisible = b.isVisible;
+            
+            // Check if butterfly is off screen
+            if (isOffScreen(b.x, b.y)) {
+              // Respawn butterfly from screen edge
+              const edge = Math.floor(Math.random() * 4);
+              switch (edge) {
+                case 0: // Top
+                  newX = Math.random() * window.innerWidth;
+                  newY = -50;
+                  break;
+                case 1: // Right
+                  newX = window.innerWidth + 50;
+                  newY = Math.random() * window.innerHeight;
+                  break;
+                case 2: // Bottom
+                  newX = Math.random() * window.innerWidth;
+                  newY = window.innerHeight + 50;
+                  break;
+                case 3: // Left
+                  newX = -50;
+                  newY = Math.random() * window.innerHeight;
+                  break;
+              }
+              newTarget = randomTarget();
+            } else if (dist < 30) {
+              // Set new target when close to current target
+              newTarget = randomTarget();
+            }
+
+            const angle = Math.atan2(newTarget.y - newX, newTarget.x - newX);
+            const deltaAngle = angle - b.prevAngle;
+
+            // Rotation jitter when changing direction (simulate small wing adjustment)
+            const newRotationJitter = deltaAngle * 3; // Reduced for smoother animation
+
+            // Flutter faster if turning more (realistic wing behavior)
+            const flutterSpeed = 0.08 + Math.abs(deltaAngle) * 2; // Reduced for performance
+            const newFlutterPhase = b.flutterPhase + flutterSpeed;
+            const flutterY = Math.sin(newFlutterPhase) * 1.5; // Reduced flutter amplitude
+
+            // Move towards target smoothly
+            newX = newX + Math.cos(angle) * b.speed;
+            newY = newY + Math.sin(angle) * b.speed + flutterY;
+
+            return {
+              ...b,
+              x: newX,
+              y: newY,
+              angle,
+              flutterPhase: newFlutterPhase,
+              target: newTarget,
+              prevAngle: angle,
+              rotationJitter: newRotationJitter,
+              isVisible: newIsVisible,
+            };
+          })
+        );
+        lastTime = currentTime;
+      }
+
+      animationId = requestAnimationFrame(animate);
+    };
+
+    animate(0);
+
+    return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    };
+  }, []);
+
+  return (
+    <div className="butterflies-container">
+      {butterflies.map((butterfly) => {
+        // Don't render if still in spawn delay or not visible
+        if (butterfly.spawnDelay > 0 || !butterfly.isVisible) {
+          return null;
+        }
+        
+        return (
+          <div
+            key={butterfly.id}
+            className="butterfly"
+            style={{
+              position: 'absolute',
+              left: butterfly.x,
+              top: butterfly.y,
+              transform: `rotate(${butterfly.angle * (180 / Math.PI) + 90 + butterfly.rotationJitter}deg)`,
+              width: butterfly.size,
+              height: butterfly.size,
+              pointerEvents: 'none',
+              zIndex: 15,
+              transformOrigin: 'center center',
+              opacity: butterfly.isVisible ? 1 : 0,
+              transition: 'opacity 0.3s ease-in-out',
+            }}
+          >
+            <DotLottieReact
+              src={butterfly.lottieSrc}
+              loop
+              autoplay
+              style={{
+                width: '80%',
+                height: '80%',
+                filter: 'drop-shadow(0 2px 4px rgba(212, 175, 55, 0.3))',
+              }}
+            />
+          </div>
+        );
+      })}
+      <style jsx>{`
+        .butterflies-container {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 200%;
+          height: 200%;
+          pointer-events: none;
+          z-index: 15;
+          overflow: hidden;
+        }
+        .butterfly {
+          transform-origin: center center;
+          will-change: transform, opacity;
+        }
+      `}</style>
+    </div>
+  );
+};
 
 // Falling Leaves Component
 const FallingLeaves = () => {
@@ -374,7 +605,7 @@ const FallingLeaves = () => {
 };
 
 export default function WeddingInvitation() {
-  const [isLoaded, setIsLoaded] = useState(true)
+  const [isLoaded, setIsLoaded] = useState(false)
   const [isMusicLoaded, setIsMusicLoaded] = useState(true) // Start as true to avoid loading state
   const [isBackgroundLoaded, setIsBackgroundLoaded] = useState(false)
   const [activeSection, setActiveSection] = useState<string | null>(null)
@@ -434,161 +665,168 @@ export default function WeddingInvitation() {
   const [seconds, setSeconds] = useState(0)
 
   useEffect(() => {
-    // Initialize AOS
-    AOS.init({
-      duration: 1000,
-      once: false,
-      mirror: true,
-      offset: 50,
-    })
-
-    // Force scroll to top on page load/refresh
-    window.scrollTo(0, 0)
-
-    // Add smooth scroll behavior to html element
-    document.documentElement.style.scrollBehavior = 'smooth'
+    // Set loaded state immediately for better perceived performance
+    setIsLoaded(true)
     
-    // Optimize smooth scroll performance
-    const smoothScroll = (e: WheelEvent) => {
-      if (e.ctrlKey) return; // Don't intercept zoom
-      
-      e.preventDefault()
-      
-      const delta = e.deltaY
-      const scrollSpeed = 1.8 // Reduced from 2.2 for smoother scrolling
-      
-      // Use simpler, more performant scroll
-      window.scrollBy({
-        top: delta * scrollSpeed,
-        behavior: 'smooth'
-      });
-    }
-
-    // Add wheel event listener
-    window.addEventListener('wheel', smoothScroll, { passive: false })
-
-    // Handle scroll for section detection
-    const handleScroll = () => {
-      const sections = document.querySelectorAll("section[id]")
-
-      let currentActiveSection: string | null = null
-      let minDistance = Number.MAX_VALUE
-
-      sections.forEach((section) => {
-        const sectionTop = section.getBoundingClientRect().top
-        const distance = Math.abs(sectionTop)
-
-        if (distance < minDistance) {
-          minDistance = distance
-          currentActiveSection = section.id
-        }
+    // Defer heavy initialization to next frame
+    const initializeApp = () => {
+      // Initialize AOS with reduced settings for better performance
+      AOS.init({
+        duration: 800, // Reduced from 1000
+        once: false,
+        mirror: true,
+        offset: 50,
+        disable: window.innerWidth < 768 ? 'mobile' : false, // Disable on mobile for performance
       })
 
-      setActiveSection(currentActiveSection)
+      // Force scroll to top on page load/refresh
+      window.scrollTo(0, 0)
 
-      // Hide scroll indicator after scrolling
-      if (window.scrollY > 100) {
-        setShowScrollIndicator(false)
+      // Add smooth scroll behavior to html element
+      document.documentElement.style.scrollBehavior = 'smooth'
+
+      // Handle scroll for section detection with throttling
+      let scrollTimeout: NodeJS.Timeout;
+      const handleScroll = () => {
+        if (scrollTimeout) clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+          const sections = document.querySelectorAll("section[id]")
+
+          let currentActiveSection: string | null = null
+          let minDistance = Number.MAX_VALUE
+
+          sections.forEach((section) => {
+            const sectionTop = section.getBoundingClientRect().top
+            const distance = Math.abs(sectionTop)
+
+            if (distance < minDistance) {
+              minDistance = distance
+              currentActiveSection = section.id
+            }
+          })
+
+          setActiveSection(currentActiveSection)
+
+          // Hide scroll indicator after scrolling
+          if (window.scrollY > 100) {
+            setShowScrollIndicator(false)
+          }
+        }, 16); // ~60fps throttling
+      }
+
+      // Use passive listener for better scroll performance
+      window.addEventListener("scroll", handleScroll, { passive: true })
+
+      // Add Moulpali font with preload
+      const link = document.createElement("link")
+      link.rel = "preload"
+      link.as = "style"
+      link.href = "https://fonts.googleapis.com/css2?family=Moulpali&display=swap"
+      link.onload = () => {
+        link.rel = "stylesheet"
+      }
+      document.head.appendChild(link)
+
+      // Setup intersection observer for animations with reduced threshold
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && entry.target.id) {
+              const animateOnce = entry.target.getAttribute('data-animate') === 'once';
+              if (animateOnce && !animatedElements.has(entry.target.id)) {
+                setAnimatedElements((prev) => new Set([...prev, entry.target.id]));
+              } else if (!animateOnce) {
+                setAnimatedElements((prev) => new Set([...prev, entry.target.id]));
+              }
+            }
+          })
+        },
+        { 
+          threshold: 0.05, // Reduced from 0.1 for better performance
+          rootMargin: '30px' // Reduced from 50px
+        }
+      );
+
+      // Observe all elements with data-animate attribute
+      document.querySelectorAll("[data-animate]").forEach((el) => {
+        if (el.id) {
+          observer.observe(el);
+        }
+      });
+
+      // Load confetti script asynchronously
+      const confettiScript = document.createElement("script")
+      confettiScript.src = "https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"
+      confettiScript.async = true
+      document.body.appendChild(confettiScript)
+
+      // Track user interaction to enable audio
+      const markUserInteraction = () => {
+        tryPlayAudio();
+      };
+
+      // Add interaction listeners for autoplay
+      const interactionEvents = [
+        'click', 'touchstart', 'touchend', 'mousedown', 
+        'keydown', 'scroll', 'mousemove', 'pointerdown'
+      ];
+      
+      interactionEvents.forEach(event => {
+        document.addEventListener(event, markUserInteraction, { once: true });
+      });
+
+      // Try to play audio immediately for Safari and iOS with multiple approaches
+      const tryPlayAudio = () => {
+        if (audioRef.current) {
+          // Set audio properties first
+          audioRef.current.volume = 0
+          audioRef.current.loop = true
+          audioRef.current.muted = false
+          
+          // Try to play with different methods
+          const playPromise = audioRef.current.play();
+          
+          if (playPromise !== undefined) {
+            playPromise.then(() => {
+              console.log('Auto-play started successfully');
+              setIsMuted(false);
+              fadeInVolume();
+            }).catch(error => {
+              console.log("Initial audio autoplay failed - expected due to browser policies:", error);
+              // Will try again on user interaction
+            });
+          }
+        }
+      };
+      
+      // Try playing on page load with different delays
+      setTimeout(tryPlayAudio, 500); // Increased initial delay
+      setTimeout(tryPlayAudio, 2000);
+      setTimeout(tryPlayAudio, 4000);
+      
+      return () => {
+        window.removeEventListener("scroll", handleScroll)
+        document.documentElement.style.scrollBehavior = ''
+        observer.disconnect()
+        if (document.body.contains(confettiScript)) {
+          document.body.removeChild(confettiScript)
+        }
+        if (document.head.contains(link)) {
+          document.head.removeChild(link)
+        }
+        
+        // Remove interaction listeners
+        interactionEvents.forEach(event => {
+          document.removeEventListener(event, markUserInteraction);
+        });
       }
     }
-
-    // Use passive listener for better scroll performance
-    window.addEventListener("scroll", handleScroll, { passive: true })
-
-    // Add Moulpali font
-    const link = document.createElement("link")
-    link.rel = "stylesheet"
-    link.href = "https://fonts.googleapis.com/css2?family=Moulpali&display=swap"
-    document.head.appendChild(link)
-
-    // Setup intersection observer for animations
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.target.id) {
-            const animateOnce = entry.target.getAttribute('data-animate') === 'once';
-            if (animateOnce && !animatedElements.has(entry.target.id)) {
-              setAnimatedElements((prev) => new Set([...prev, entry.target.id]));
-            } else if (!animateOnce) {
-              setAnimatedElements((prev) => new Set([...prev, entry.target.id]));
-            }
-          }
-        })
-      },
-      { 
-        threshold: 0.1,
-        rootMargin: '50px'
-      }
-    );
-
-    // Observe all elements with data-animate attribute
-    document.querySelectorAll("[data-animate]").forEach((el) => {
-      if (el.id) {
-        observer.observe(el);
-      }
-    });
-
-    // Load confetti script
-    const confettiScript = document.createElement("script")
-    confettiScript.src = "https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"
-    document.body.appendChild(confettiScript)
-
-    // Track user interaction to enable audio
-    const markUserInteraction = () => {
-      tryPlayAudio();
-    };
-
-    // Add interaction listeners for autoplay
-    const interactionEvents = [
-      'click', 'touchstart', 'touchend', 'mousedown', 
-      'keydown', 'scroll', 'mousemove', 'pointerdown'
-    ];
     
-    interactionEvents.forEach(event => {
-      document.addEventListener(event, markUserInteraction, { once: true });
-    });
-
-    // Try to play audio immediately for Safari and iOS with multiple approaches
-    const tryPlayAudio = () => {
-      if (audioRef.current) {
-        // Set audio properties first
-        audioRef.current.volume = 0
-        audioRef.current.loop = true
-        audioRef.current.muted = false
-        
-        // Try to play with different methods
-        const playPromise = audioRef.current.play();
-        
-        if (playPromise !== undefined) {
-          playPromise.then(() => {
-            console.log('Auto-play started successfully');
-            setIsMuted(false);
-            fadeInVolume();
-          }).catch(error => {
-            console.log("Initial audio autoplay failed - expected due to browser policies:", error);
-            // Will try again on user interaction
-          });
-        }
-      }
-    };
-    
-    // Try playing on page load with different delays
-    setTimeout(tryPlayAudio, 300);
-    setTimeout(tryPlayAudio, 1500);
-    setTimeout(tryPlayAudio, 3000);
+    // Use requestAnimationFrame to defer initialization
+    requestAnimationFrame(initializeApp)
     
     return () => {
-      window.removeEventListener('wheel', smoothScroll)
-      window.removeEventListener("scroll", handleScroll)
-      document.documentElement.style.scrollBehavior = ''
-      observer.disconnect()
-      document.body.removeChild(confettiScript)
-      document.head.removeChild(link)
-      
-      // Remove interaction listeners
-      interactionEvents.forEach(event => {
-        document.removeEventListener(event, markUserInteraction);
-      });
+      // Cleanup will be handled by the initializeApp function
     }
   }, [])  // Remove dependency to avoid re-running when hasUserInteracted changes
 
@@ -652,7 +890,7 @@ export default function WeddingInvitation() {
     if (element) {
       const offset = 80 // Height of your fixed header
       
-      // Use simpler, more performant scrolling
+      // Use normal scrolling
       window.scrollTo({
         top: element.offsetTop - offset,
         behavior: 'smooth'
@@ -663,7 +901,7 @@ export default function WeddingInvitation() {
   }
 
   const openGoogleMaps = () => {
-    window.open("https://goo.gl/maps/9GmUAiCrTFBpQyzJ9", "_blank")
+    window.open("https://maps.app.goo.gl/fEVZ6Qo396gv8Jif9", "_blank")
   }
 
   // Load background image and audio
@@ -730,74 +968,65 @@ export default function WeddingInvitation() {
   const weddingEvents: WeddingEvent[] = [
     {
       id: "pithi-choul-mlup",
-      title: "ពិធីចូលម្លប់",
+      title: "ពិធីសែនទេវតា",
       titleEn: "Entering the Shade Ceremony",
-      description: "ពិធីចូលម្លប់គឺជាពិធីដែលកូនក្រមុំត្រូវបានដាក់នៅក្នុងម្លប់ដើម្បីត្រៀមខ្លួនសម្រាប់ពិធីមង្គលការ។",
-      date: "១៥ មេសា ២០២៥",
-      time: "០៨:០០ ព្រឹក",
+      description: "ពិធីចូលម្លប់គឺជាពិធីដែលកូនក្រមុំត្រូវបានដាក់នៅក្នុងម្លប់ដើម្បីត្រៀមខ្លួនសម្រាប់ពិធីមង្គលការ។ នេះជាពិធីប្រពៃណីដ៏សំខាន់ដែលតំណាងឱ្យការចាប់ផ្តើមជីវិតថ្មី។",
+      date: "១៦ មករា ២០២៦",
+      time: "០៦:៣០ ព្រឹក",
       icon: TreePine,
     },
     {
       id: "pithi-suon-phka",
-      title: "ពិធីស្នូរផ្កា",
+      title: "ពិធីហែជំនួន​ កំណត់",
       titleEn: "Flower Offering Ceremony",
-      description: "ពិធីស្នូរផ្កាគឺជាពិធីដែលគ្រួសារទាំងពីរធ្វើការផ្លាស់ប្តូរផ្កាជាសញ្ញានៃការព្រមព្រៀងរៀបអាពាហ៍ពិពាហ៍។",
-      date: "១៦ មេសា ២០២៥",
+      description: "ពិធីស្នូរផ្កាគឺជាពិធីដែលគ្រួសារទាំងពីរធ្វើការផ្លាស់ប្តូរផ្កាជាសញ្ញានៃការព្រមព្រៀងរៀបអាពាហ៍ពិពាហ៍។ ផ្កាតំណាងឱ្យសេចក្តីស្រឡាញ់ និងការព្រមព្រៀង។",
+      date: "១៦ មករា ២០២៦",
       time: "០៧:០០ ព្រឹក",
       icon: Leaf,
     },
     {
       id: "pithi-sampeah-preah",
-      title: "ពិធីសំពះព្រះ",
+      title: "ពិធីបំពាក់ចិញ្ចៀន",
       titleEn: "Blessing Ceremony",
-      description: "ពិធីសំពះព្រះគឺជាពិធីដែលកូនក្មេងទាំងពីរសុំពរជ័យពីព្រះរតនត្រ័យ និងវិញ្ញាណក្ខន្ធដូនតា។",
-      date: "១៦ មេសា ២០២៥",
-      time: "០៩:០០ ព្រឹក",
-      icon: Heart,
-    },
-    {
-      id: "pithi-putthey-sema",
-      title: "ពិធីពុទ្ធិសេមា",
-      titleEn: "Buddhist Blessing Ceremony",
-      description: "ពិធីពុទ្ធិសេមាគឺជាពិធីដែលព្រះសង្ឃធ្វើការប្រសិទ្ធិពរជូនដល់គូស្វាមីភរិយាថ្មី។",
-      date: "១៦ មេសា ២០២៥",
-      time: "១០:០០ ព្រឹក",
+      description: "ពិធីសំពះព្រះគឺជាពិធីដែលកូនក្មេងទាំងពីរសុំពរជ័យពីព្រះរតនត្រ័យ និងវិញ្ញាណក្ខន្ធដូនតា។ នេះជាពិធីសុំពរជ័យពីអាទិទេព។",
+      date: "១៦ មករា ២០២៦",
+      time: "០៧:៣០ ព្រឹក",
       icon: Heart,
     },
     {
       id: "pithi-gat-sak",
-      title: "ពិធីកាត់សក់",
+      title: "ពិធីកាត់សក់បង្កក់សេរី",
       titleEn: "Hair Cutting Ceremony",
-      description: "ពិធីកាត់សក់គឺជាពិធីប្រពៃណីខ្មែរដែលតំណាងឱ្យការចាប់ផ្តើមជីវិតថ្មី។",
-      date: "១៦ មេសា ២០២៥",
-      time: "១៤:០០ រសៀល",
+      description: "ពិធីកាត់សក់គឺជាពិធីប្រពៃណីខ្មែរដែលតំណាងឱ្យការចាប់ផ្តើមជីវិតថ្មី។ ការកាត់សក់តំណាងឱ្យការលាចោលអតីត និងចាប់ផ្តើមជីវិតថ្មី។",
+      date: "១៦ មករា ២០២៦",
+      time: "០៨:៣០ ព្រឹក",
       icon: Clock,
     },
     {
       id: "pithi-bangvil-po",
-      title: "ពិធីបង្វិលពរ",
+      title: "ពិធីសំពះពេលា",
       titleEn: "Blessing Palanquin Ceremony",
-      description: "ពិធីបង្វិលពរគឺជាពិធីដែលគ្រួសារ និងញាតិមិត្តធ្វើការជូនពរដល់គូស្វាមីភរិយាថ្មី។",
-      date: "១៦ មេសា ២០២៥",
-      time: "១៥:៣០ រសៀល",
+      description: "ពិធីបង្វិលពរគឺជាពិធីដែលគ្រួសារ និងញាតិមិត្តធ្វើការជូនពរដល់គូស្វាមីភរិយាថ្មី។ ពិធីនេះតំណាងឱ្យការជូនពរពីគ្រួសារ និងមិត្តភក្តិ។",
+      date: "១៦ មករា ២០២៦",
+      time: "១០:០៥ ព្រឹក",
       icon: Heart,
     },
     {
       id: "pithi-phsam-derm-tey",
-      title: "ពិធីផ្សំដំណើក",
+      title: "ពិធីបើកវាំងនន បាចផ្កាស្លា បង្វិលពពិល",
       titleEn: "Bed Ceremony",
-      description: "ពិធីផ្សំដំណើកគឺជាពិធីចុងក្រោយដែលចាស់ទុំរៀបចំបន្ទប់សម្រាប់គូស្វាមីភរិយាថ្មី។",
-      date: "១៦ មេសា ២០២៥",
-      time: "១៦:៣០ ល្ងាច",
+      description: "ពិធីផ្សំដំណើកគឺជាពិធីចុងក្រោយដែលចាស់ទុំរៀបចំបន្ទប់សម្រាប់គូស្វាមីភរិយាថ្មី។ ពិធីនេះតំណាងឱ្យការត្រៀមខ្លួនសម្រាប់ជីវិតគូស្វាមីភរិយា។",
+      date: "១៦ មករា ២០២៦",
+      time: "១០:១៥ ព្រឹក",
       icon: Heart,
     },
     {
       id: "reception",
-      title: "ពិធីទទួលភ្ញៀវ",
+      title: "ពិធីទទួលភ្ញៀវពិសារអាហារថ្ងៃត្រង់",
       titleEn: "Wedding Reception",
-      description: "ពិធីទទួលភ្ញៀវគឺជាពិធីដែលភ្ញៀវអញ្ជើញមកចូលរួមអបអរសាទរដល់គូស្វាមីភរិយាថ្មី។",
-      date: "១៦ មេសា ២០២៥",
-      time: "១៨:០០ ល្ងាច",
+      description: "ពិធីទទួលភ្ញៀវគឺជាពិធីដែលភ្ញៀវអញ្ជើញមកចូលរួមអបអរសាទរដល់គូស្វាមីភរិយាថ្មី។ នេះជាពិធីចុងក្រោយដែលភ្ញៀវទាំងអស់អបអរសាទរជាមួយគូស្វាមីភរិយាថ្មី។",
+      date: "១៦ មករា ២០២៦",
+      time: "១២:០០ ថ្ងៃត្រង់",
       icon: MapPin,
     },
   ]
@@ -821,14 +1050,33 @@ export default function WeddingInvitation() {
     { id: 8, src: "https://i.pinimg.com/736x/24/02/87/2402875e12ebf23cd217a5951adb275a.jpg", alt: "Couple Photo 8" },
     { id: 9, src: "https://i.pinimg.com/736x/02/c2/a9/02c2a947cdacb55556bde03d0a475431.jpg", alt: "Couple Photo 9" },
     { id: 10, src: "https://i.pinimg.com/736x/4b/15/a3/4b15a39ace3eb17741d88ce8d6b01333.jpg", alt: "Couple Photo 10" },
+    { id: 11, src: "https://i.pinimg.com/736x/03/e7/d6/03e7d62b3b7b4463770833d74edd4f31.jpg", alt: "Couple Photo 1" },
+    { id: 12, src: "https://i.pinimg.com/474x/87/c0/95/87c0954d9a30df14848ac03f1e2641c3.jpg", alt: "Couple Photo 2" },
+    { id: 13, src: "https://i.pinimg.com/736x/aa/28/d9/aa28d9d249b95ca746f030bb54172a6e.jpg", alt: "Couple Photo 3" },
+    { id: 14, src: "https://i.pinimg.com/736x/e2/0a/cb/e20acb47a9003bb8ec9f7aae3e9284ba.jpg", alt: "Couple Photo 4" },
+    { id: 15, src: "https://i.pinimg.com/736x/45/24/9c/45249cd5322115a5a9d9939642723695.jpg", alt: "Couple Photo 5" },
+    {
+      id: 16,
+      src: "https://cambodiajeep.com/wp-content/themes/yootheme/cache/a6/1-jeep-in-front-of-gate-min-a6f20276.jpeg",
+      alt: "Couple Photo 6",
+    },
+    {
+      id: 17,
+      src: "https://cambodiajeep.com/wp-content/themes/yootheme/cache/bb/photo_2021-11-10-14.51.39-min-bb97a6b0.jpeg",
+      alt: "Couple Photo 7",
+    },
+    { id: 18, src: "https://i.pinimg.com/736x/24/02/87/2402875e12ebf23cd217a5951adb275a.jpg", alt: "Couple Photo 8" },
+    { id: 19, src: "https://i.pinimg.com/736x/02/c2/a9/02c2a947cdacb55556bde03d0a475431.jpg", alt: "Couple Photo 9" },
+    { id: 20, src: "https://i.pinimg.com/736x/4b/15/a3/4b15a39ace3eb17741d88ce8d6b01333.jpg", alt: "Couple Photo 10" },
+    
   ]
 
-  const sampleWishes: Wish[] = [
+  const sampleWishes: Wish[] = [  
     {
       id: 1,
       name: "វិចិត្រ",
       message: "សូមជូនពរឲ្យអ្នកទាំងពីរមានសុភមង្គល និងសេចក្តីសុខគ្រប់ពេលវេលា។",
-      date: "១០ មករា ២០២៦",
+      date: "១៦ មករា ២០២៦",
       guests: 2,
     },
     {
@@ -917,6 +1165,9 @@ export default function WeddingInvitation() {
           isLoaded && isBackgroundLoaded ? "opacity-100" : "opacity-0",
         )}
       >
+        {/* Butterfly Animation */}
+        <ButterflyAnimation />
+        
         {/* Falling Leaves Animation */}
         <FallingLeaves />
         
@@ -986,10 +1237,10 @@ export default function WeddingInvitation() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-[#2c5e1a]"
+                  className="text-[#2c5e1a] hover:bg-[#e8f5e5]/50 transition-colors"
                   onClick={() => setShowMobileMenu(!showMobileMenu)}
                 >
-                  {showMobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                  {showMobileMenu ? <X className="h-5 w-5 sm:h-6 sm:w-6" /> : <Menu className="h-5 w-5 sm:h-6 sm:w-6" />}
                 </Button>
               </div>
             </div>
@@ -1061,7 +1312,7 @@ export default function WeddingInvitation() {
                   data-aos="fade-up"
                   data-aos-delay="800"
                 >
-                  ១០ មករា​ ២០២៦
+                  ១៦ មករា​ ២០២៦
                 </p>
               </div>
 
@@ -1091,22 +1342,22 @@ export default function WeddingInvitation() {
 
               {/* Action Buttons */}
               <div 
-                className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4 mb-12 sm:mb-16 px-4"
+                className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4 lg:space-x-6 mb-12 sm:mb-16 px-4"
                 data-aos="fade-up"
                 data-aos-delay="1200"
               >
                 <Button 
                   onClick={() => scrollToSection('events')} 
-                  className="bg-[#2c5e1a] hover:bg-[#87b577] text-white font-moulpali transform hover:scale-105 transition-all duration-300 w-full sm:w-40 text-sm sm:text-base py-2 sm:py-3"
+                  className="bg-[#2c5e1a] hover:bg-[#87b577] text-white font-moulpali transform hover:scale-105 transition-all duration-300 w-full sm:w-auto sm:min-w-[200px] lg:min-w-[240px] text-sm sm:text-base lg:text-lg py-2 sm:py-3 lg:py-4 px-4 sm:px-6 lg:px-8"
                 >
-                  <Calendar className="w-4 h-4 mr-2" />
+                  <Calendar className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                   មើលកម្មវិធីមង្គលការ
                 </Button>
                 <Button 
                   onClick={() => scrollToSection('wishes')}
-                  className="bg-[#2c5e1a] hover:bg-[#87b577] text-white font-moulpali transform hover:scale-105 transition-all duration-300 w-full sm:w-40 text-sm sm:text-base py-2 sm:py-3"
+                  className="bg-[#2c5e1a] hover:bg-[#87b577] text-white font-moulpali transform hover:scale-105 transition-all duration-300 w-full sm:w-auto sm:min-w-[200px] lg:min-w-[240px] text-sm sm:text-base lg:text-lg py-2 sm:py-3 lg:py-4 px-4 sm:px-6 lg:px-8"
                 >
-                  <Heart className="w-4 h-4 mr-2" />
+                  <Heart className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                   ផ្ញើពាក្យជូនពរ
                 </Button>
               </div>
@@ -1285,7 +1536,7 @@ export default function WeddingInvitation() {
                 <div className="relative w-full h-[250px] sm:h-[400px] md:h-[500px] bg-[#f5f5f5] rounded-xl overflow-hidden">
                   <div className="absolute inset-0">
                     <iframe
-                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3908.7698247110544!2d104.91791661532566!3d11.569888791785682!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3109513dc76a6be3%3A0x9c010ee85ab525bb!2sRoyal%20Palace%20Hotel!5e0!3m2!1sen!2skh!4v1711386391626!5m2!1sen!2skh"
+                       src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d1954.2684071712724!2d105.21499744040767!3d11.585025817991149!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2skh!4v1760164274281!5m2!1sen!2skh"
                       width="100%"
                       height="100%"
                       style={{ border: 0 }}
@@ -1297,13 +1548,13 @@ export default function WeddingInvitation() {
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 bg-gradient-to-t from-black/70 to-transparent">
                     <div className="max-w-xl mx-auto text-center">
-                      <h3 className="font-moul text-lg sm:text-xl mb-2 text-white drop-shadow-lg">សណ្ឋាគារ រ៉ូយ៉ាល់</h3>
-                      <p className="font-moulpali mb-3 sm:mb-4 text-white/90 text-xs sm:text-sm">ផ្លូវលេខ ៩២, សង្កាត់វត្តភ្នំ, ខណ្ឌដូនពេញ, រាជធានីភ្នំពេញ</p>
+                      <h3 className="font-moul text-lg sm:text-xl mb-2 text-white drop-shadow-lg">គេហដ្ឋានខាងស្រី</h3>
+                      <p className="font-moulpali mb-3 sm:mb-4 text-white/90 text-xs sm:text-sm">ភូមិព្រៃមាស , ឃុំត្នោត, ស្រុកពោធិ៍រៀង, ខេត្តព្រៃវែង</p>
                       <Button 
                         onClick={openGoogleMaps} 
-                        className="bg-white/90 hover:bg-white text-[#2c5e1a] hover:text-[#87b577] transition-all duration-300 transform hover:scale-105 text-xs sm:text-sm py-1.5 sm:py-2"
+                        className="bg-white/90 hover:bg-white text-[#2c5e1a] hover:text-[#87b577] transition-all duration-300 transform hover:scale-105 text-xs sm:text-sm lg:text-base py-1.5 sm:py-2 lg:py-3 px-3 sm:px-4 lg:px-6"
                       >
-                        <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                        <MapPin className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 mr-2" />
                         <span className="font-moulpali">បើកក្នុងផែនទី Google</span>
                       </Button>
                     </div>
@@ -1397,9 +1648,9 @@ export default function WeddingInvitation() {
 
                         <Button 
                           type="submit" 
-                          className="w-full forest-button mt-4 hover:scale-105 transform transition-all duration-300 hover:shadow-lg group"
+                          className="w-full forest-button mt-4 hover:scale-105 transform transition-all duration-300 hover:shadow-lg group text-sm sm:text-base lg:text-lg py-2 sm:py-3 lg:py-4"
                         >
-                          <Send className="h-4 w-4 mr-2 group-hover:translate-x-1 transition-transform" />
+                          <Send className="h-4 w-4 sm:h-5 sm:w-5 mr-2 group-hover:translate-x-1 transition-transform" />
                           <span className="font-moulpali">ផ្ញើពាក្យជូនពរ</span>
                         </Button>
                       </form>
@@ -1451,18 +1702,33 @@ export default function WeddingInvitation() {
                 <div className="h-[1px] bg-[#2c5e1a]/30 w-12 sm:w-16"></div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mt-6">
-                <div className="p-4 bg-[#e8f5e5]/70 backdrop-blur-[2px] rounded-lg hover:bg-[#e8f5e5]/90 transition-all duration-300 transform hover:scale-105 hover:shadow-lg group">
-                  <h4 className="font-moul text-lg mb-2 text-[#1a4810] drop-shadow-sm group-hover:text-[#87b577] transition-colors">គណនីធនាគារ</h4>
-                  <p className="font-moulpali text-sm mb-2 group-hover:text-[#2c5e1a] transition-colors">ABA: 123-456-789</p>
-                  <p className="font-moulpali text-sm group-hover:text-[#2c5e1a] transition-colors">ACLEDA: 987-654-321</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mt-6 max-w-2xl mx-auto">
+                <div className="p-6 bg-[#e8f5e5]/70 backdrop-blur-[2px] rounded-lg hover:bg-[#e8f5e5]/90 transition-all duration-300 transform hover:scale-105 hover:shadow-lg group">
+                  <h4 className="font-moul text-lg mb-4 text-[#1a4810] drop-shadow-sm group-hover:text-[#87b577] transition-colors flex items-center">
+                    <span className="mr-2">🏦</span>
+                    គណនី ABA
+                  </h4>
+                  <div className="space-y-2">
+                    <p className="font-moulpali text-base group-hover:text-[#2c5e1a] transition-colors">ឈ្មោះ: សំណាង និង រ៉ូស្សា</p>
+                    <p className="font-moulpali text-lg font-semibold group-hover:text-[#2c5e1a] transition-colors">ABA: 000 123 456</p>
+                    <p className="font-moulpali text-sm text-[#2c3e1a]/70 group-hover:text-[#2c3e1a] transition-colors">សូមអរគុណសម្រាប់អំណោយរបស់អ្នក</p>
+                  </div>
                 </div>
 
-                <div className="p-4 bg-[#e8f5e5]/70 backdrop-blur-[2px] rounded-lg hover:bg-[#e8f5e5]/90 transition-all duration-300 transform hover:scale-105 hover:shadow-lg">
-                  <h4 className="font-moul text-lg mb-2 text-[#1a4810] drop-shadow-sm hover:text-[#87b577] transition-colors">បញ្ជីអំណោយ</h4>
-                  <Button className="forest-button w-full mt-2 hover:scale-105 transform transition-all duration-300 hover:shadow-lg group">
-                    <span className="font-moulpali group-hover:translate-x-1 transition-transform">មើលបញ្ជីអំណោយ</span>
-                  </Button>
+                <div className="p-6 bg-[#e8f5e5]/70 backdrop-blur-[2px] rounded-lg hover:bg-[#e8f5e5]/90 transition-all duration-300 transform hover:scale-105 hover:shadow-lg group">
+                  <h4 className="font-moul text-lg mb-4 text-[#1a4810] drop-shadow-sm group-hover:text-[#87b577] transition-colors flex items-center">
+                    <span className="mr-2">📱</span>
+                    KHQR Code
+                  </h4>
+                  <div className="space-y-2">
+                    <p className="font-moulpali text-base group-hover:text-[#2c5e1a] transition-colors">ស្កេន KHQR ដើម្បីផ្ទេរប្រាក់</p>
+                    <div className="bg-white p-4 rounded-lg border-2 border-dashed border-[#87b577]/50 group-hover:border-[#87b577] transition-colors">
+                      <div className="w-full h-32 bg-gray-100 rounded flex items-center justify-center">
+                        <span className="text-[#2c3e1a]/50 font-moulpali text-sm">KHQR Code</span>
+                      </div>
+                    </div>
+                    <p className="font-moulpali text-sm text-[#2c3e1a]/70 group-hover:text-[#2c3e1a] transition-colors">ស្កេនដើម្បីផ្ទេរប្រាក់យ៉ាងងាយស្រួល</p>
+                  </div>
                 </div>
               </div>
             </div>
