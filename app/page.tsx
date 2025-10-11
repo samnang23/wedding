@@ -84,7 +84,7 @@ const ButterflyAnimation = () => {
     isVisible: boolean;
     spawnDelay: number;
   }[]>([]);
-  
+
   useEffect(() => {
     // Array of butterfly Lottie URLs
     const butterflyAssets = [
@@ -95,18 +95,18 @@ const ButterflyAnimation = () => {
 
     // Optimized butterfly count for mobile performance
     const butterflyCount = typeof window !== 'undefined' && window.innerWidth < 768 ? 8 : 25;
-    
+
     const randomTarget = () => ({
       x: Math.random() * window.innerWidth,
       y: Math.random() * window.innerHeight
     });
-    
+
     const newButterflies = Array.from({ length: butterflyCount }).map((_, index) => {
       const size = 30 + Math.random() * 25; // Slightly smaller for better performance
       const x = Math.random() * window.innerWidth;
       const y = Math.random() * window.innerHeight;
       const lottieSrc = butterflyAssets[Math.floor(Math.random() * butterflyAssets.length)];
-      
+
       return {
         id: index,
         x,
@@ -123,7 +123,7 @@ const ButterflyAnimation = () => {
         spawnDelay: Math.random() * 2000, // Staggered spawning
       };
     });
-    
+
     setButterflies(newButterflies);
   }, []);
 
@@ -133,31 +133,31 @@ const ButterflyAnimation = () => {
     let lastTime = 0;
     const targetFPS = typeof window !== 'undefined' && window.innerWidth < 768 ? 20 : 30; // Even lower FPS on mobile for better performance
     const frameInterval = 1000 / targetFPS;
-    
+
     const randomTarget = () => ({
       x: Math.random() * window.innerWidth,
       y: Math.random() * window.innerHeight
     });
-    
+
     const isOffScreen = (x: number, y: number, margin = 100) => {
-      return x < -margin || x > window.innerWidth + margin || 
-             y < -margin || y > window.innerHeight + margin;
+      return x < -margin || x > window.innerWidth + margin ||
+        y < -margin || y > window.innerHeight + margin;
     };
-    
+
     const animate = (currentTime: number) => {
       if (currentTime - lastTime >= frameInterval) {
-        setButterflies(prevButterflies => 
+        setButterflies(prevButterflies =>
           prevButterflies.map(b => {
             // Handle spawn delay
             if (b.spawnDelay > 0) {
               return { ...b, spawnDelay: b.spawnDelay - frameInterval };
             }
-            
+
             // Skip animation if not visible
             if (!b.isVisible) {
               return b;
             }
-            
+
             const dx = b.target.x - b.x;
             const dy = b.target.y - b.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
@@ -166,7 +166,7 @@ const ButterflyAnimation = () => {
             let newX = b.x;
             let newY = b.y;
             let newIsVisible = b.isVisible;
-            
+
             // Check if butterfly is off screen
             if (isOffScreen(b.x, b.y)) {
               // Respawn butterfly from screen edge
@@ -245,7 +245,7 @@ const ButterflyAnimation = () => {
         if (butterfly.spawnDelay > 0 || !butterfly.isVisible) {
           return null;
         }
-        
+
         return (
           <div
             key={butterfly.id}
@@ -299,12 +299,12 @@ const ButterflyAnimation = () => {
 
 // Falling Leaves Component
 const FallingLeaves = () => {
-  const [leaves, setLeaves] = useState<{id: number, style: React.CSSProperties, leafType: number, animationClass: string}[]>([]);
+  const [leaves, setLeaves] = useState<{ id: number, style: React.CSSProperties, leafType: number, animationClass: string }[]>([]);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const requestRef = useRef<number | undefined>(undefined);
   const previousTimeRef = useRef<number | undefined>(undefined);
   const leavesContainerRef = useRef<HTMLDivElement>(null);
-  
+
   useEffect(() => {
     // Generate leaves with random properties - reduced for mobile
     const leafCount = typeof window !== 'undefined' && window.innerWidth < 768 ? 6 : 20;
@@ -312,7 +312,7 @@ const FallingLeaves = () => {
       const scale = 0.4 + Math.random() * 0.6;
       const leafType = Math.floor(Math.random() * 4); // 0, 1, 2, or 3 for different leaf icons
       const animationClass = `leaf-animation-${Math.floor(Math.random() * 4)}`; // 4 different animation patterns
-      
+
       return {
         id: index,
         leafType,
@@ -332,9 +332,9 @@ const FallingLeaves = () => {
         } as React.CSSProperties,
       };
     });
-    
+
     setLeaves(newLeaves);
-    
+
     // Handle window resize
     const handleResize = () => {
       const updatedLeafCount = typeof window !== 'undefined' && window.innerWidth < 768 ? 6 : 20;
@@ -346,7 +346,7 @@ const FallingLeaves = () => {
               const scale = 0.4 + Math.random() * 0.6;
               const leafType = Math.floor(Math.random() * 4);
               const animationClass = `leaf-animation-${Math.floor(Math.random() * 4)}`;
-              
+
               return {
                 id: prev.length + index,
                 leafType,
@@ -374,26 +374,26 @@ const FallingLeaves = () => {
         });
       }
     };
-    
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  
+
   // Handle mouse movement to affect leaves (desktop only)
   useEffect(() => {
     // Only add mouse listeners on desktop devices
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
       return;
     }
-    
+
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
     };
-    
+
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
-  
+
   // Animate leaves based on mouse position using requestAnimationFrame for better performance (desktop only)
   const animate = (time: number) => {
     // Skip mouse-based animation on mobile devices
@@ -402,27 +402,27 @@ const FallingLeaves = () => {
       requestRef.current = requestAnimationFrame(animate);
       return;
     }
-    
+
     if (previousTimeRef.current !== undefined) {
       if (leavesContainerRef.current) {
         const container = leavesContainerRef.current;
         const leaves = container.querySelectorAll('.leaf');
-        
+
         leaves.forEach((leaf) => {
           const rect = leaf.getBoundingClientRect();
           const leafCenterX = rect.left + rect.width / 2;
           const leafCenterY = rect.top + rect.height / 2;
-          
+
           // Calculate distance between mouse and leaf
           const dx = mousePosition.x - leafCenterX;
           const dy = mousePosition.y - leafCenterY;
           const distance = Math.sqrt(dx * dx + dy * dy);
-          
+
           // Only affect leaves within a certain radius to mouse
           if (distance < 200) {
             // Calculate influence based on distance (closer = stronger effect)
             const influence = 1 - distance / 200;
-            
+
             // Apply subtle drift away from mouse
             (leaf as HTMLElement).style.setProperty('--pointer-x', `${dx * -0.3 * influence}px`);
             (leaf as HTMLElement).style.setProperty('--pointer-y', `${dy * -0.1 * influence}px`);
@@ -434,11 +434,11 @@ const FallingLeaves = () => {
         });
       }
     }
-    
+
     previousTimeRef.current = time;
     requestRef.current = requestAnimationFrame(animate);
   };
-  
+
   useEffect(() => {
     requestRef.current = requestAnimationFrame(animate);
     return () => {
@@ -449,7 +449,7 @@ const FallingLeaves = () => {
   }, [mousePosition]);
 
   const renderLeafIcon = (type: number) => {
-    switch(type) {
+    switch (type) {
       case 0:
         return <Leaf className="text-[#87b577] transition-colors hover:text-[#2c5e1a]" />;
       case 1:
@@ -685,7 +685,7 @@ export default function WeddingInvitation() {
   useEffect(() => {
     // Set loaded state immediately for better perceived performance
     setIsLoaded(true)
-    
+
     // Defer heavy initialization to next frame
     const initializeApp = () => {
       // Initialize AOS with early trigger settings for better responsiveness
@@ -742,11 +742,11 @@ export default function WeddingInvitation() {
       // Use passive listener for better scroll performance
       window.addEventListener("scroll", handleScroll, { passive: true })
 
-      // Add Moulpali font with preload
+      // Add Bokor font with preload
       const link = document.createElement("link")
       link.rel = "preload"
       link.as = "style"
-      link.href = "https://fonts.googleapis.com/css2?family=Moulpali&display=swap"
+      link.href = "https://fonts.googleapis.com/css2?family=Bokor&display=swap"
       link.onload = () => {
         link.rel = "stylesheet"
       }
@@ -766,7 +766,7 @@ export default function WeddingInvitation() {
             }
           })
         },
-        { 
+        {
           threshold: 0.05, // Reduced from 0.1 for better performance
           rootMargin: '30px' // Reduced from 50px
         }
@@ -792,10 +792,10 @@ export default function WeddingInvitation() {
 
       // Add interaction listeners for autoplay
       const interactionEvents = [
-        'click', 'touchstart', 'touchend', 'mousedown', 
+        'click', 'touchstart', 'touchend', 'mousedown',
         'keydown', 'scroll', 'mousemove', 'pointerdown'
       ];
-      
+
       interactionEvents.forEach(event => {
         document.addEventListener(event, markUserInteraction, { once: true });
       });
@@ -807,10 +807,10 @@ export default function WeddingInvitation() {
           audioRef.current.volume = 0
           audioRef.current.loop = true
           audioRef.current.muted = false
-          
+
           // Try to play with different methods
           const playPromise = audioRef.current.play();
-          
+
           if (playPromise !== undefined) {
             playPromise.then(() => {
               console.log('Auto-play started successfully');
@@ -823,12 +823,12 @@ export default function WeddingInvitation() {
           }
         }
       };
-      
+
       // Try playing on page load with different delays
       setTimeout(tryPlayAudio, 500); // Increased initial delay
       setTimeout(tryPlayAudio, 2000);
       setTimeout(tryPlayAudio, 4000);
-      
+
       return () => {
         window.removeEventListener("scroll", handleScroll)
         document.documentElement.style.scrollBehavior = ''
@@ -839,17 +839,17 @@ export default function WeddingInvitation() {
         if (document.head.contains(link)) {
           document.head.removeChild(link)
         }
-        
+
         // Remove interaction listeners
         interactionEvents.forEach(event => {
           document.removeEventListener(event, markUserInteraction);
         });
       }
     }
-    
+
     // Use requestAnimationFrame to defer initialization
     requestAnimationFrame(initializeApp)
-    
+
     return () => {
       // Cleanup will be handled by the initializeApp function
     }
@@ -914,13 +914,13 @@ export default function WeddingInvitation() {
     const element = document.getElementById(id)
     if (element) {
       const offset = 80 // Height of your fixed header
-      
+
       // Use normal scrolling
       window.scrollTo({
         top: element.offsetTop - offset,
         behavior: 'smooth'
       });
-      
+
       setShowMobileMenu(false)
     }
   }
@@ -969,7 +969,7 @@ export default function WeddingInvitation() {
   const fadeOutVolume = () => {
     const audio = audioRef.current
     if (!audio) return
-    
+
     let currentVolume = audio.volume
     const fadeInterval = setInterval(() => {
       currentVolume = Math.max(currentVolume - 0.05, 0)
@@ -985,8 +985,8 @@ export default function WeddingInvitation() {
   const adjustVolume = (newLevel: number) => {
     const audio = audioRef.current
     if (!audio || isMuted) return
-    
-    
+
+
     audio.volume = newLevel
   }
 
@@ -1093,10 +1093,10 @@ export default function WeddingInvitation() {
     { id: 18, src: "https://i.pinimg.com/736x/24/02/87/2402875e12ebf23cd217a5951adb275a.jpg", alt: "Couple Photo 8" },
     { id: 19, src: "https://i.pinimg.com/736x/02/c2/a9/02c2a947cdacb55556bde03d0a475431.jpg", alt: "Couple Photo 9" },
     { id: 20, src: "https://i.pinimg.com/736x/4b/15/a3/4b15a39ace3eb17741d88ce8d6b01333.jpg", alt: "Couple Photo 10" },
-    
+
   ]
 
-  const sampleWishes: Wish[] = [  
+  const sampleWishes: Wish[] = [
     {
       id: 1,
       name: "វិចិត្រ",
@@ -1123,7 +1123,7 @@ export default function WeddingInvitation() {
   return (
     <>
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Moulpali&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Bokor&display=swap');
         
         html, body {
           margin: 0;
@@ -1151,7 +1151,7 @@ export default function WeddingInvitation() {
         }
 
         .font-moulpali {
-          font-family: "Moulpali", system-ui, sans-serif;
+          font-family: "Bokor", system-ui, sans-serif;
         }
 
         .scroll-indicator {
@@ -1192,12 +1192,12 @@ export default function WeddingInvitation() {
       >
         {/* Butterfly Animation */}
         <ButterflyAnimation />
-        
+
         {/* Falling Leaves Animation */}
         <FallingLeaves />
-        
+
         {/* Background image with blur and opacity */}
-        <div 
+        <div
           className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat bg-fixed"
           style={{
             backgroundImage: "url('/images/forest-wedding-bg.png')",
@@ -1211,7 +1211,7 @@ export default function WeddingInvitation() {
           }}
         >
           {/* Add an overlay to ensure consistent background color */}
-          <div 
+          <div
             className="absolute inset-0 w-full h-full"
             style={{
               backgroundColor: "rgba(255, 255, 255, 0.2)",
@@ -1221,13 +1221,13 @@ export default function WeddingInvitation() {
         </div>
 
         {/* Add a fallback background color */}
-        <div 
-          className="fixed inset-0 z-[-1] w-full h-full" 
+        <div
+          className="fixed inset-0 z-[-1] w-full h-full"
           style={{
             backgroundColor: "#f8faf6"
           }}
         ></div>
-        
+
         {/* Content wrapper */}
         <div className="relative z-10 w-full">
           {/* Navigation */}
@@ -1308,7 +1308,7 @@ export default function WeddingInvitation() {
           {/* Hero Section */}
           <section className="pt-16 sm:pt-20 pb-24 sm:pb-32 relative min-h-[100svh] flex items-center justify-center w-full">
             <div className="container mx-auto px-3 sm:px-4 text-center relative flex flex-col items-center w-full">
-              <div 
+              <div
                 className="inline-block mb-4 sm:mb-6"
                 data-aos="zoom-in"
                 data-aos-delay="100"
@@ -1316,7 +1316,7 @@ export default function WeddingInvitation() {
                 <Heart className="h-8 w-8 sm:h-12 sm:w-12 text-[#2c5e1a] mx-auto animate-beat hover:text-[#87b577] transition-colors" />
               </div>
 
-              <h1 
+              <h1
                 className="font-moul text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#2c5e1a] mb-4 sm:mb-6 forest-text-shadow px-4 sm:px-6 leading-relaxed"
                 data-aos="fade-up"
                 data-aos-delay="200"
@@ -1325,14 +1325,14 @@ export default function WeddingInvitation() {
               </h1>
 
               <div className="mb-8 sm:mb-10 space-y-4 sm:space-y-5">
-                <p 
+                <p
                   className="font-moul text-2xl sm:text-3xl md:text-4xl text-[#2c5e1a] px-4"
                   data-aos="fade-up"
                   data-aos-delay="300"
                 >
                   សំណាង & រ៉ូស្សា
                 </p>
-                <p 
+                <p
                   className="font-moulpali text-xl sm:text-2xl md:text-3xl text-[#2c3e1a]"
                   data-aos="fade-up"
                   data-aos-delay="400"
@@ -1342,7 +1342,7 @@ export default function WeddingInvitation() {
               </div>
 
               {/* Countdown section */}
-              <div 
+              <div
                 className="flex justify-center gap-2 sm:gap-4 mb-8 sm:mb-12"
                 data-aos="fade-up"
                 data-aos-delay="500"
@@ -1366,19 +1366,19 @@ export default function WeddingInvitation() {
               </div>
 
               {/* Action Buttons */}
-              <div 
+              <div
                 className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4 lg:space-x-6 mb-12 sm:mb-16 px-4"
                 data-aos="fade-up"
                 data-aos-delay="600"
               >
-                <Button 
-                  onClick={() => scrollToSection('events')} 
+                <Button
+                  onClick={() => scrollToSection('events')}
                   className="bg-[#2c5e1a] hover:bg-[#87b577] text-white font-moulpali transform hover:scale-105 transition-all duration-300 w-full sm:w-auto sm:min-w-[200px] lg:min-w-[240px] text-sm sm:text-base lg:text-lg py-2 sm:py-3 lg:py-4 px-4 sm:px-6 lg:px-8"
                 >
                   <Calendar className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                   មើលកម្មវិធីមង្គលការ
                 </Button>
-                <Button 
+                <Button
                   onClick={() => scrollToSection('wishes')}
                   className="bg-[#2c5e1a] hover:bg-[#87b577] text-white font-moulpali transform hover:scale-105 transition-all duration-300 w-full sm:w-auto sm:min-w-[200px] lg:min-w-[240px] text-sm sm:text-base lg:text-lg py-2 sm:py-3 lg:py-4 px-4 sm:px-6 lg:px-8"
                 >
@@ -1389,7 +1389,7 @@ export default function WeddingInvitation() {
 
               {/* Scroll Indicator */}
               {showScrollIndicator && (
-                <div 
+                <div
                   onClick={() => scrollToSection('intro')}
                   className="fixed bottom-16 sm:bottom-20 left-1/2 transform -translate-x-1/2 cursor-pointer group z-40"
                 >
@@ -1403,7 +1403,7 @@ export default function WeddingInvitation() {
           {/* Gallery Section */}
           <section id="gallery" className="py-12 sm:py-16 relative w-full">
             <div className="container mx-auto px-3 sm:px-6 lg:px-8">
-              <div 
+              <div
                 className="flex items-center justify-center mb-12"
                 data-aos="fade-up"
               >
@@ -1449,10 +1449,10 @@ export default function WeddingInvitation() {
                         >
                           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
                           <div className="absolute inset-0 border-4 border-[#87b577]/20 group-hover:border-[#87b577]/40 rounded-xl z-20 transition-colors"></div>
-                          <Image 
-                            src={photo.src || "/placeholder.svg"} 
-                            alt={photo.alt} 
-                            fill 
+                          <Image
+                            src={photo.src || "/placeholder.svg"}
+                            alt={photo.alt}
+                            fill
                             className="object-cover transition-transform duration-700 group-hover:scale-110"
                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                             priority={index < 6} // Load first 6 images immediately
@@ -1465,15 +1465,15 @@ export default function WeddingInvitation() {
                         </div>
                       </DialogTrigger>
                       <DialogContent className="max-w-5xl w-[95vw] p-2 bg-black/80 backdrop-blur-lg border-none rounded-xl">
-                        <div 
+                        <div
                           className="relative w-full aspect-[4/3] rounded-lg overflow-hidden"
                           data-aos="zoom-in"
                           data-aos-duration="500"
                         >
-                          <Image 
-                            src={photo.src || "/placeholder.svg"} 
-                            alt={photo.alt} 
-                            fill 
+                          <Image
+                            src={photo.src || "/placeholder.svg"}
+                            alt={photo.alt}
+                            fill
                             className="object-contain"
                             sizes="95vw"
                             priority
@@ -1488,57 +1488,53 @@ export default function WeddingInvitation() {
           </section>
 
           {/* Events Timeline Section */}
-          <section id="events" className="py-12 sm:py-16 relative w-full">
-            <div className="container mx-auto px-3 sm:px-6 lg:px-8 max-w-7xl">
-              <div 
-                className="flex items-center justify-center mb-12"
-                data-aos="fade-up"
-              >
+          <section id="events" className="py-12 sm:py-16 relative w-full bg-[url('/forest-bg.jpg')] bg-cover bg-center bg-no-repeat">
+            <div className="absolute inset-0  backdrop-blur-sm"></div>
+
+            <div className="container mx-auto px-3 sm:px-6 lg:px-8 max-w-3xl relative z-10">
+              {/* Title */}
+              <div className="flex items-center justify-center" data-aos="fade-up">
                 <div className="h-[1px] bg-[#2c5e1a]/30 w-12 sm:w-16"></div>
-                <Trees className="h-4 w-4 sm:h-6 sm:w-6 mx-3 sm:mx-4 text-[#2c5e1a] animate-sway" />
-                <h2 className="font-moul text-xl sm:text-2xl md:text-3xl text-center text-[#2c5e1a] forest-text-shadow">កម្មវិធីមង្គលការ</h2>
-                <Trees className="h-4 w-4 sm:h-6 sm:w-6 mx-3 sm:mx-4 text-[#2c5e1a] animate-sway" />
+                <h2 className="font-koulen text-[1.8rem] sm:text-3xl md:text-4xl text-center text-[#2c5e1a] drop-shadow-[0_2px_2px_rgba(0,0,0,0.2)]">
+                  កម្មវិធីមង្គលអាពាហ៍ពិពាហ៍
+                </h2>
                 <div className="h-[1px] bg-[#2c5e1a]/30 w-12 sm:w-16"></div>
               </div>
 
-              <div className="max-w-md mx-auto space-y-4">
+              {/* Vertical timeline */}
+              <div className="relative">
+                {/* Line */}
+                {/* <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-[#2c5e1a]/30 transform -translate-x-1/2"></div> */}
+
+                
+
                 {weddingEvents.map((event, index) => (
                   <div
                     key={event.id}
-                    className="relative"
+                    className="relative flex flex-col items-center text-center"
                     data-aos="fade-up"
-                    data-aos-delay={index * 50}
+                    data-aos-delay={index * 80}
                   >
-                    <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 hover:bg-white/90">
-                      <h3 className="font-moul text-xl text-[#2c5e1a] mb-1">{event.title}</h3>
-                      <p className="font-moulpali text-sm text-[#2c5e1a]/80 mb-3">{event.titleEn}</p>
-                      
-                      <div className="flex items-center space-x-4 text-[#2c3e1a] mb-3">
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="h-4 w-4 text-[#87b577]" />
-                          <span className="font-moulpali text-sm">{event.date}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Clock className="h-4 w-4 text-[#87b577]" />
-                          <span className="font-moulpali text-sm">{event.time}</span>
-                        </div>
+                    {/* Dot */}
+                    <div className="py-2"></div>
+                   <div className="w-[5px] h-[25px] bg-[#2c5e1a]/100 mx-auto rounded-full"></div>
+                   <div className="py-2"></div>
+                    {/* Event content */}
+                    <div className="">
+                      <div className="font-kantumruy-pro font-semibold text-green-900 text-[1.8rem] sm:text-[2rem]">
+                        ម៉ោង {event.time}
                       </div>
-                      
-                      <p className="font-moulpali text-sm text-[#2c3e1a]/80 leading-relaxed">{event.description}</p>
+                      <h3 className="font-kantumruy-pro text-green-900 text-[1.8rem] sm:text-2xl leading-snug">
+                        {event.title}
+                      </h3>
+                      <p className=" font-kantumruy-pro text-green-900/80 text-[1.4rem] sm:text-[1.5rem]">{event.titleEn}</p>
                     </div>
-
-                    {/* Connector line and dot */}
-                    {index !== weddingEvents.length - 1 && (
-                      <div className="absolute left-1/2 bottom-0 transform -translate-x-1/2 translate-y-full">
-                        <div className="w-0.5 h-4 bg-[#2c5e1a]/30"></div>
-                        <div className="w-2 h-2 rounded-full bg-[#2c5e1a] absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2"></div>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
             </div>
           </section>
+
 
           {/* Location Section */}
           <section id="location" className="py-12 sm:py-16 relative w-full">
@@ -1562,7 +1558,7 @@ export default function WeddingInvitation() {
                 <div className="relative w-full h-[250px] sm:h-[400px] md:h-[500px] bg-[#f5f5f5] rounded-xl overflow-hidden">
                   <div className="absolute inset-0">
                     <iframe
-                       src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d1954.2684071712724!2d105.21499744040767!3d11.585025817991149!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2skh!4v1760164274281!5m2!1sen!2skh"
+                      src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d1954.2684071712724!2d105.21499744040767!3d11.585025817991149!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2skh!4v1760164274281!5m2!1sen!2skh"
                       width="100%"
                       height="100%"
                       style={{ border: 0 }}
@@ -1576,8 +1572,8 @@ export default function WeddingInvitation() {
                     <div className="max-w-xl mx-auto text-center">
                       <h3 className="font-moul text-lg sm:text-xl mb-2 text-white drop-shadow-lg">គេហដ្ឋានខាងស្រី</h3>
                       <p className="font-moulpali mb-3 sm:mb-4 text-white/90 text-xs sm:text-sm">ភូមិព្រៃមាស , ឃុំត្នោត, ស្រុកពោធិ៍រៀង, ខេត្តព្រៃវែង</p>
-                      <Button 
-                        onClick={openGoogleMaps} 
+                      <Button
+                        onClick={openGoogleMaps}
                         className="bg-white/90 hover:bg-white text-[#2c5e1a] hover:text-[#87b577] transition-all duration-300 transform hover:scale-105 text-xs sm:text-sm lg:text-base py-1.5 sm:py-2 lg:py-3 px-3 sm:px-4 lg:px-6"
                       >
                         <MapPin className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 mr-2" />
@@ -1672,8 +1668,8 @@ export default function WeddingInvitation() {
                           </div>
                         </div>
 
-                        <Button 
-                          type="submit" 
+                        <Button
+                          type="submit"
                           className="w-full forest-button mt-4 hover:scale-105 transform transition-all duration-300 hover:shadow-lg group text-sm sm:text-base lg:text-lg py-2 sm:py-3 lg:py-4"
                         >
                           <Send className="h-4 w-4 sm:h-5 sm:w-5 mr-2 group-hover:translate-x-1 transition-transform" />

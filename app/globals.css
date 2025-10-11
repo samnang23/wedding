@@ -82,8 +82,19 @@
     font-style: normal;
   }
   .font-moulpali {
-    font-family: "Moulpali", sans-serif;
+    font-family: "Koulen", sans-serif;
     font-weight: 400;
+    font-style: normal;
+  }
+  .font-koulen {
+    font-family: "Koulen", system-ui, sans-serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+  .font-kantumruy-pro {
+    font-family: "Kantumruy Pro", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 500;
     font-style: normal;
   }
   .font-khmer {

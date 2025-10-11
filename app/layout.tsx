@@ -22,6 +22,8 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Moul&family=Moulpali&family=Hanuman:wght@100;300;400;700;900&display=swap"
           rel="stylesheet"
         />
+        <link href="https://fonts.googleapis.com/css2?family=Koulen&display=swap" rel="stylesheet"/>
+        <link href="https://fonts.googleapis.com/css2?family=Bokor&family=Kantumruy+Pro:ital,wght@0,100..700;1,100..700&family=Koulen&display=swap" rel="stylesheet"></link>
         <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
       </head>
       <body>
