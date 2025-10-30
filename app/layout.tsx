@@ -2,6 +2,7 @@ import type React from "react"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 
+
 export const metadata = {
   title: "Khmer Forest Wedding Invitation",
   description: "A beautiful digital wedding invitation in Khmer tradition with a forest theme",
@@ -23,7 +24,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
         <link href="https://fonts.googleapis.com/css2?family=Koulen&display=swap" rel="stylesheet"/>
-        <link href="https://fonts.googleapis.com/css2?family=Bokor&family=Kantumruy+Pro:ital,wght@0,100..700;1,100..700&family=Koulen&display=swap" rel="stylesheet"></link>
+        <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet"/>
         <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
       </head>
       <body>
