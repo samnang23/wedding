@@ -614,7 +614,7 @@ export default function WeddingContent() {
             scrollToSection={scrollToSection}
           />
            {/* New Section */}
-           <NewSection />
+           <NewSection scrollToSection={scrollToSection} />
 
           {/* Gallery Section */}
           <GallerySection photos={photos} isMobile={isMobile} />

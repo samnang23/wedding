@@ -400,7 +400,7 @@
   [data-aos*="fade-left"],
   [data-aos*="fade-right"],
   [data-aos*="zoom-in"] {
-    transition-duration: 1s !important;
+    transition-duration: 1.8s !important;
   }
   
   /* Reduce motion for users who prefer it */

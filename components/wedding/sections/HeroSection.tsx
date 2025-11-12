@@ -127,7 +127,7 @@ export const HeroSection = ({ days, hours, minutes, seconds, showScrollIndicator
         {/* Scroll Indicator */}
         {showScrollIndicator && (
           <div
-            onClick={() => scrollToSection('NewSection')}
+            onClick={() => scrollToSection('new-section')}
             className="fixed bottom-16 sm:bottom-20 left-1/2 transform -translate-x-1/2 cursor-pointer group z-40 justify-center items-center flex flex-col"
           >
             <p className="font-kantumruy-pro text-xs sm:text-sm mb-1 sm:mb-2 text-[#2c5e1a] group-hover:text-[#87b577] transition-colors">អូសចុះក្រោម</p>
