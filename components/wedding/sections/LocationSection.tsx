@@ -3,6 +3,7 @@
 import { Trees, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import Image from "next/image"
 
 interface LocationSectionProps {
   animatedElements: Set<string>
@@ -49,13 +50,27 @@ export const LocationSection = ({ animatedElements }: LocationSectionProps) => {
               <div className="max-w-xl mx-auto text-center">
                 <h3 className="font-moul text-lg sm:text-xl mb-2 text-white drop-shadow-lg">គេហដ្ឋានខាងស្រី</h3>
                 <p className="font-moulpali mb-3 sm:mb-4 text-white/90 text-xs sm:text-sm">ភូមិព្រៃមាស , ឃុំត្នោត, ស្រុកពោធិ៍រៀង, ខេត្តព្រៃវែង</p>
-                <Button
-                  onClick={openGoogleMaps}
-                  className="bg-white/90 hover:bg-white text-[#2c5e1a] hover:text-[#87b577] transition-all duration-300 transform hover:scale-105 text-xs sm:text-sm lg:text-base py-1.5 sm:py-2 lg:py-3 px-3 sm:px-4 lg:px-6"
-                >
-                  <MapPin className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 mr-2" />
-                  <span className="font-moulpali">បើកក្នុងផែនទី Google</span>
-                </Button>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+                  <Button
+                    onClick={openGoogleMaps}
+                    className="bg-white/90 hover:bg-white text-[#2c5e1a] hover:text-[#87b577] transition-all duration-300 transform hover:scale-105 text-xs sm:text-sm lg:text-base py-1.5 sm:py-2 lg:py-3 px-3 sm:px-4 lg:px-6"
+                  >
+                    <MapPin className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 mr-2" />
+                    <span className="font-moulpali">បើកក្នុងផែនទី Google</span>
+                  </Button>
+                  <div className="bg-white/90 p-2 rounded-lg border-2 border-white/50">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 relative">
+                      <Image
+                        src="/images/google_map_qr.png"
+                        alt="Google Maps QR Code"
+                        fill
+                        className="object-contain rounded"
+                        sizes="(max-width: 96px) 96px, 96px"
+                      />
+                    </div>
+                    <p className="font-moulpali text-xs text-[#2c5e1a] mt-1">ស្កេន QR</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

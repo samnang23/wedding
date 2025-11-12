@@ -15,7 +15,7 @@ export const Navigation = ({ activeSection, showMobileMenu, setShowMobileMenu, s
   const sections = ["intro", "gallery", "events", "location", "wishes"]
   const sectionNames: Record<string, string> = {
     intro: "ការណែនាំ",
-    gallery: "រូបភាព",
+    gallery: "វិចិត្រសាល",
     events: "ព្រឹត្តិការណ៍",
     location: "ទីតាំង",
     wishes: "ជូនពរ"

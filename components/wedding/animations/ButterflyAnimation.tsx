@@ -152,7 +152,7 @@ export const ButterflyAnimation = () => {
               x: newX,
               y: newY,
               angle,
-              flutterPhase: newFlutterPhase,
+              flutterPhase: newFlutterPhase,  
               target: newTarget,
               prevAngle: angle,
               rotationJitter: newRotationJitter,
