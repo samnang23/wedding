@@ -4,7 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 
 
 export const metadata = {
-  title: "Khmer Forest Wedding Invitation",
+  title: "Samnag ♥️ Rosa",
   description: "A beautiful digital wedding invitation in Khmer tradition with a forest theme",
     generator: 'v0.dev'
 }
