@@ -9,7 +9,7 @@ interface NewSectionProps {
 
 export const NewSection = ({scrollToSection}: NewSectionProps) => {
   return (
-    <section id="new-section" className="py-12 sm:py-16 relative w-full bg-white/10 backdrop-blur-sm">
+    <section id="new-section" className="py-12 sm:py-16 relative w-full bg-white/30 backdrop-blur-sm">
       <div className="container mx-auto max-w-[900px] " >
         <div
           className="flex items-center w-full justify-center mb-8 sm:mb-12"
@@ -80,7 +80,7 @@ export const NewSection = ({scrollToSection}: NewSectionProps) => {
               data-aos="fade-up"
               data-aos-delay="200"
             >
-              <p className="font-kantumruy-pro font-semibold text-lg sm:text-lg md:text-xl text-[#2c5e1a] leading-relaxed mb-4">
+              <p className="font-kantumruy-pro underline font-semibold text-lg sm:text-lg md:text-xl text-[#2c5e1a] leading-relaxed mb-4">
                 យើងខ្ញុំមានកិត្តិយសសូមគោរពអញ្ជើញ
               </p>
               <p className="font-kantumruy-pro font-medium text-lg sm:text-md md:text-lg text-[#2c5e1a] leading-relaxed mb-4">

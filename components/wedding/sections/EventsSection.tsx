@@ -1,6 +1,8 @@
 "use client"
 
 import type { WeddingEvent } from "@/types/wedding"
+import { div } from "framer-motion/client"
+import { icons } from "lucide-react"
 
 interface EventsSectionProps {
   weddingEvents: WeddingEvent[]
@@ -24,25 +26,46 @@ export const EventsSection = ({ weddingEvents }: EventsSectionProps) => {
         {/* Vertical timeline */}
         <div className="relative">
           {weddingEvents.map((event, index) => (
-            <div
-              key={event.id}
-              className="relative flex flex-col items-center text-center"
-              data-aos="fade-up"
-              data-aos-delay={index * 80}
-            >
-              {/* Dot */}
-              <div className="py-2"></div>
-              <div className="w-[5px] h-[25px] bg-[#2c5e1a]/100 mx-auto rounded-full"></div>
-              <div className="py-2"></div>
-              {/* Event content */}
-              <div className="">
-                <div className="font-kantumruy-pro font-semibold text-green-900 text-[1.8rem] sm:text-[2rem]">
-                  ម៉ោង {event.time}
+
+            <div className="flex flex-raw" key={event.id}
+            data-aos="fade-up">
+              <div className="flex items-center justify-center">
+                {typeof event.icon === "string" ? (
+                  <div
+                    className="w-[100px] h-[100px] bg-[#2c5e1a]"
+                    style={{
+                      WebkitMaskImage: `url(${event.icon})`,
+                      WebkitMaskRepeat: 'no-repeat',
+                      WebkitMaskPosition: 'center',
+                      WebkitMaskSize: 'contain',
+                      maskImage: `url(${event.icon})`,
+                      maskRepeat: 'no-repeat',
+                      maskPosition: 'center',
+                      maskSize: 'contain',
+                    }}
+                  />
+                ) : typeof event.icon === "function" ? (
+                  <event.icon className="text-[#2c5e1a] w-24 h-24" />
+                ) : null}
+              </div>
+
+              <div
+                className="relative flex flex-col items-center text-center"
+                >
+                {/* Dot */}
+                <div className="py-2"></div>
+                <div className="w-[5px] h-[25px] bg-[#2c5e1a]/100 mx-auto rounded-full"></div>
+                <div className="py-2"></div>
+                {/* Event content */}
+                <div className="">
+                  <div className="font-kantumruy-pro font-semibold text-green-900 text-[1.8rem] sm:text-[2rem]">
+                    ម៉ោង {event.time}
+                  </div>
+                  <h3 className="font-kantumruy-pro text-green-900 text-[1.8rem] sm:text-2xl leading-snug">
+                    {event.title}
+                  </h3>
+                  <p className="font-kantumruy-pro text-green-900/80 text-[1.4rem] sm:text-[1.5rem]">{event.titleEn}</p>
                 </div>
-                <h3 className="font-kantumruy-pro text-green-900 text-[1.8rem] sm:text-2xl leading-snug">
-                  {event.title}
-                </h3>
-                <p className="font-kantumruy-pro text-green-900/80 text-[1.4rem] sm:text-[1.5rem]">{event.titleEn}</p>
               </div>
             </div>
           ))}

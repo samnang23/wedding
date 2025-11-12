@@ -138,8 +138,8 @@ export default function Invitation({ guestName = "ភ្ញៀវជាទីគ
         {/* Main Content */}
         <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
           {/* Monogram */}
-          <div className="animate-scaleIn" style={{ animationDelay: '1s', opacity: 0 }}>
-            <img src="/images/snr.png" alt="" width={250} height={250} />
+          <div className="animate-scaleIn drop-shadow-[0-0_10px_black]" style={{ animationDelay: '1s', opacity: 0 }}>
+            <img src="/images/snr3.png" alt="" width={250} height={250} />
           </div>
 
           {/* Invitation Text */}

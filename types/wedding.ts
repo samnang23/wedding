@@ -7,7 +7,7 @@ export interface WeddingEvent {
   description: string
   date: string
   time: string
-  icon: ElementType
+  icon: ElementType | string
 }
 
 export interface Photo {

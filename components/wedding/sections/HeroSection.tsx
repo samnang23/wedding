@@ -39,8 +39,8 @@ export const HeroSection = ({ days, hours, minutes, seconds, showScrollIndicator
             <img src="/images/snr3.png" alt="" width={200} height={200} />
           </div>
 
-        <div className="flex flex-row justify-around items-center w-full text-white"  style={{
-              WebkitTextStroke: '0.25em green',
+        <div className="flex flex-row justify-around items-center w-full text-[#2c5e1a]"  style={{
+              WebkitTextStroke: '0.25em white',
               paintOrder: 'stroke fill',
             }} 
             data-aos="fade-up" data-aos-delay="250">

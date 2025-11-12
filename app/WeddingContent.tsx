@@ -358,7 +358,7 @@ export default function WeddingContent() {
       description: "ពិធីចូលម្លប់គឺជាពិធីដែលកូនក្រមុំត្រូវបានដាក់នៅក្នុងម្លប់ដើម្បីត្រៀមខ្លួនសម្រាប់ពិធីមង្គលការ។",
       date: "១៦ មករា ២០២៦",
       time: "០៦:៣០ ព្រឹក",
-      icon: TreePine,
+      icon: "/images/events-icon/couple.png",
     },
     {
       id: "pithi-suon-phka",
@@ -367,7 +367,7 @@ export default function WeddingContent() {
       description: "ពិធីស្នូរផ្កាគឺជាពិធីដែលគ្រួសារទាំងពីរធ្វើការផ្លាស់ប្តូរផ្កាជាសញ្ញានៃការព្រមព្រៀងរៀបអាពាហ៍ពិពាហ៍។",
       date: "១៦ មករា ២០២៦",
       time: "០៧:០០ ព្រឹក",
-      icon: Leaf,
+      icon: "/images/events-icon/gift.png",
     },
     {
       id: "pithi-sampeah-preah",
@@ -376,7 +376,7 @@ export default function WeddingContent() {
       description: "ពិធីសំពះព្រះគឺជាពិធីដែលកូនក្មេងទាំងពីរសុំពរជ័យពីព្រះរតនត្រ័យ។",
       date: "១៦ មករា ២០២៦",
       time: "០៧:៣០ ព្រឹក",
-      icon: Heart,
+      icon: "/images/events-icon/ring.png",
     },
     {
       id: "pithi-gat-sak",
@@ -385,7 +385,7 @@ export default function WeddingContent() {
       description: "ពិធីកាត់សក់គឺជាពិធីប្រពៃណីខ្មែរដែលតំណាងឱ្យការចាប់ផ្តើមជីវិតថ្មី។",
       date: "១៦ មករា ២០២៦",
       time: "០៨:៣០ ព្រឹក",
-      icon: Clock,
+      icon: "/images/events-icon/gift2.png",
     },
     {
       id: "pithi-bangvil-po",
@@ -394,7 +394,7 @@ export default function WeddingContent() {
       description: "ពិធីបង្វិលពរគឺជាពិធីដែលគ្រួសារ និងញាតិមិត្តធ្វើការជូនពរដល់គូស្វាមីភរិយាថ្មី។",
       date: "១៦ មករា ២០២៦",
       time: "១០:០៥ ព្រឹក",
-      icon: Heart,
+      icon: "/images/events-icon/couple.png",
     },
     {
       id: "pithi-phsam-derm-tey",
@@ -403,7 +403,7 @@ export default function WeddingContent() {
       description: "ពិធីផ្សំដំណើកគឺជាពិធីចុងក្រោយដែលចាស់ទុំរៀបចំបន្ទប់សម្រាប់គូស្វាមីភរិយាថ្មី។",
       date: "១៦ មករា ២០២៦",
       time: "១០:១៥ ព្រឹក",
-      icon: Heart,
+      icon: "/images/events-icon/gift2.png",
     },
     {
       id: "reception",
@@ -412,7 +412,7 @@ export default function WeddingContent() {
       description: "ពិធីទទួលភ្ញៀវគឺជាពិធីដែលភ្ញៀវអញ្ជើញមកចូលរួមអបអរសាទរដល់គូស្វាមីភរិយាថ្មី។",
       date: "១៦ មករា ២០២៦",
       time: "១២:០០ ថ្ងៃត្រង់",
-      icon: Heart,
+      icon: "/images/events-icon/cup.png",
     },
   ]
 
