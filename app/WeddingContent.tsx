@@ -513,7 +513,7 @@ export default function WeddingContent() {
           left: 0;
           width: 100%;
           height: 100%;
-          background-image: url('/images/forest-wedding-bg.png');
+          background-image: url('/images/pre-wedding/IMG_6068-min.JPG'');
           background-size: cover;
           background-position: center;
           background-repeat: no-repeat;
@@ -567,13 +567,13 @@ export default function WeddingContent() {
         <div
           className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat bg-fixed"
           style={{
-            backgroundImage: "url('/images/forest-wedding-bg.png')",
-            filter: "blur(2px)",
-            opacity: "0.8",
+            backgroundImage: "url('/images/pre-wedding/IMG_6068-min.JPG')",
+            filter: "blur(1px)",
+            opacity: "0.9",
             height: "100svh",
             width: "100%",
             transform: "scale(1.1)",
-            WebkitBackfaceVisibility: "hidden",
+            // WebkitBackfaceVisibility: "hidden",
             backfaceVisibility: "hidden",
           }}
         >
@@ -613,12 +613,13 @@ export default function WeddingContent() {
             showScrollIndicator={showScrollIndicator}
             scrollToSection={scrollToSection}
           />
+           {/* New Section */}
+           <NewSection />
 
           {/* Gallery Section */}
           <GallerySection photos={photos} isMobile={isMobile} />
 
-          {/* New Section */}
-          <NewSection />
+         
 
           {/* Events Timeline Section */}
           <EventsSection weddingEvents={weddingEvents} />

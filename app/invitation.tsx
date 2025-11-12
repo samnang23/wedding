@@ -115,7 +115,7 @@ export default function Invitation({ guestName = "ភ្ញៀវជាទីគ
         <div
           className="absolute inset-0 bg-cover bg-center h-[100vh]s bg-fixed "
           style={{
-            backgroundImage: "url('/images/forest-wedding-bg.png')",
+            backgroundImage: "url('/images/pre-wedding/IMG_6068-min.JPG')",
             filter: "blur(2px) ",
           }}
         />
@@ -138,8 +138,8 @@ export default function Invitation({ guestName = "ភ្ញៀវជាទីគ
         {/* Main Content */}
         <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
           {/* Monogram */}
-          <div className="animate-scaleIn" style={{ animationDelay: '0.2s', opacity: 0 }}>
-            <img src="/images/snr.png" alt="" width={300} height={300} />
+          <div className="animate-scaleIn" style={{ animationDelay: '1s', opacity: 0 }}>
+            <img src="/images/snr.png" alt="" width={250} height={250} />
           </div>
 
           {/* Invitation Text */}
