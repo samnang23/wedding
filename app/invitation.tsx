@@ -138,32 +138,8 @@ export default function Invitation({ guestName = "ភ្ញៀវជាទីគ
         {/* Main Content */}
         <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
           {/* Monogram */}
-          <div className="mb-8 sm:mb-12 animate-scaleIn" style={{ animationDelay: '0.2s', opacity: 0 }}>
-            <div className="monogram">
-              <svg
-                width="120"
-                height="120"
-                viewBox="0 0 120 120"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="text-[#2c5e1a]"
-              >
-                <circle cx="60" cy="60" r="58" stroke="currentColor" strokeWidth="2" opacity="0.3" />
-                <circle cx="60" cy="60" r="50" stroke="currentColor" strokeWidth="1" opacity="0.5" />
-                <text
-                  x="50%"
-                  y="55%"
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fontSize="48"
-                  fontWeight="bold"
-                  fill="currentColor"
-                  fontFamily="serif"
-                >
-                  S&R
-                </text>
-              </svg>
-            </div>
+          <div className="animate-scaleIn" style={{ animationDelay: '0.2s', opacity: 0 }}>
+            <img src="/images/snr.png" alt="" width={300} height={300} />
           </div>
 
           {/* Invitation Text */}

@@ -15,6 +15,7 @@ import { FallingLeaves } from "@/components/wedding/animations/FallingLeaves"
 import { Navigation } from "@/components/wedding/Navigation"
 import { HeroSection } from "@/components/wedding/sections/HeroSection"
 import { GallerySection } from "@/components/wedding/sections/GallerySection"
+import { NewSection } from "@/components/wedding/sections/NewSection"
 import { EventsSection } from "@/components/wedding/sections/EventsSection"
 import { LocationSection } from "@/components/wedding/sections/LocationSection"
 import { WishesSection } from "@/components/wedding/sections/WishesSection"
@@ -600,6 +601,9 @@ export default function WeddingContent() {
 
           {/* Gallery Section */}
           <GallerySection photos={photos} isMobile={isMobile} />
+
+          {/* New Section */}
+          <NewSection />
 
           {/* Events Timeline Section */}
           <EventsSection weddingEvents={weddingEvents} />
