@@ -212,7 +212,11 @@ export const GallerySection = ({ photos, isMobile }: GallerySectionProps) => {
         >
           <div className="h-[1px] bg-[#2c5e1a]/30 w-12 sm:w-16"></div>
           <Trees className="h-4 w-4 sm:h-6 sm:w-6 mx-3 sm:mx-4 text-[#2c5e1a] animate-sway" />
-          <h2 className="font-moul text-xl sm:text-2xl md:text-3xl text-center text-[#2c5e1a] forest-text-shadow">
+          <h2 className="font-moul text-xl sm:text-2xl md:text-3xl text-center text-[#2c5e1a] forest-text-shadow"
+            style={{
+              WebkitTextStroke: '0.15em white',
+              paintOrder: 'stroke fill',
+            }}>
             វិចិត្រសាល
           </h2>
           <Trees className="h-4 w-4 sm:h-6 sm:w-6 mx-3 sm:mx-4 text-[#2c5e1a] animate-sway" />
