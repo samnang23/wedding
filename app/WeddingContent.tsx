@@ -417,10 +417,11 @@ export default function WeddingContent() {
   ]
 
   const photos: Photo[] = [
+    { id: 3, src: "/images/pre-wedding/IMG_6056-min.JPG", alt: "Couple Photo 3" },
     { id: 1, src: "/images/pre-wedding/IMG_6050-min.JPG", alt: "Couple Photo 1" },
     { id: 2, src: "/images/pre-wedding/IMG_6051-min.JPG", alt: "Couple Photo 2" },
-    { id: 3, src: "/images/pre-wedding/IMG_6056-min.JPG", alt: "Couple Photo 3" },
     { id: 4, src: "/images/pre-wedding/IMG_6063-min.JPG", alt: "Couple Photo 4" },
+    { id: 14, src: "/images/pre-wedding/IMG_6090-min.JPG", alt: "Couple Photo 14" },
     { id: 5, src: "/images/pre-wedding/IMG_6062-min.JPG", alt: "Couple Photo 5" },
     { id: 6, src: "/images/pre-wedding/IMG_6066-min.JPG", alt: "Couple Photo 6" },
     { id: 7, src: "/images/pre-wedding/IMG_6067-min.JPG", alt: "Couple Photo 7" },
@@ -430,7 +431,6 @@ export default function WeddingContent() {
     { id: 11, src: "/images/pre-wedding/IMG_6081-min.JPG", alt: "Couple Photo 11" },
     { id: 12, src: "/images/pre-wedding/IMG_6085-min.JPG", alt: "Couple Photo 12" },
     { id: 13, src: "/images/pre-wedding/IMG_6086-min.JPG", alt: "Couple Photo 13" },
-    { id: 14, src: "/images/pre-wedding/IMG_6090-min.JPG", alt: "Couple Photo 14" },
     { id: 15, src: "/images/pre-wedding/IMG_6089-min.JPG", alt: "Couple Photo 15" },
     { id: 16, src: "/images/pre-wedding/IMG_6091-min.JPG", alt: "Couple Photo 16" },
     { id: 17, src: "/images/pre-wedding/IMG_6093-min.JPG", alt: "Couple Photo 17" },

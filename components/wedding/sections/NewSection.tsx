@@ -62,7 +62,7 @@ export const NewSection = ({scrollToSection}: NewSectionProps) => {
               </div>
 
               {/* Bride's Parents */}
-              <div className="text-right  flex flex-col gap-1">
+              <div className="text-left  flex flex-col gap-1">
                 {/* <p className="font-kantumruy-pro font-bold text-lg sm:text-lg md:text-2xl text-[#2c5e1a]/80 mb-1">ឪពុកម្តាយស្រី</p> */}
                 <p className="font-moul text-base sm:text-md md:text-xl text-[#2c5e1a]">លោក តុង ថា</p>
                 <p className="font-moul text-base sm:text-md md:text-xl text-[#2c5e1a]">លោកស្រី សាន់ ធីតា</p>
@@ -107,7 +107,7 @@ export const NewSection = ({scrollToSection}: NewSectionProps) => {
               <Heart className="h-10 w-10 sm:h-8 sm:w-8 text-[#2c5e1a] animate-pulse" />
 
               <div className="text-center flex flex-col gap-2">
-                <p className="font-kantumruy-pro text-lg sm:text-lg md:text-2xl text-[#2c5e1a] mb-2">កូនស្រីនាម</p>
+                <p className="font-kantumruy-pro text-lg sm:text-lg md:text-2xl text-[#2c5e1a] mb-2 font-semibold">កូនស្រីនាម</p>
                 <p className="font-moul text-xl sm:text-2xl md:text-3xl text-[#2c5e1a]">តុង រ៉ូស្សា</p>
                 <p className="font-kantumruy-pro font-semibold text-lg sm:text-lg md:text-2xl text-[#2c5e1a] mt-1">Tong Rosa</p>
               </div>
@@ -123,7 +123,7 @@ export const NewSection = ({scrollToSection}: NewSectionProps) => {
               data-aos-delay="400"
             >
               <div>
-                <p className="font-moulpali text-md sm:text-base md:lg text-[#2c5e1a] mb-2">
+                <p className="font-moul text-md sm:text-lg md:text-xl  text-[#2c5e1a] mb-2 ">
                   សូមភ្ញៀវកិត្តិយសចូលរួមពិសារភោជនាហារ ដែលនឹងប្រព្រឹត្តទៅនៅ
                 </p>
                
@@ -151,7 +151,7 @@ export const NewSection = ({scrollToSection}: NewSectionProps) => {
                 <p className="font-moul text-base sm:text-lg md:text-xl text-[#2c5e1a] mb-3">
                   នៅគេហដ្ឋានខាងស្រី
                 </p>
-                <p className="font-battambang text-base sm:text-lg md:text-xl text-[#2c5e1a] font-semibold">
+                <p className="font-kantumruy-pro text-base sm:text-lg md:text-xl text-[#2c5e1a] font-semibold">
                   ស្ថិតនៅ ភូមិព្រៃមាស ឃុំកំពង់ឫស្សី ស្រុកពោធិ៍រៀង ខេត្តព្រៃវែង
                 </p>
 

@@ -5,6 +5,7 @@ import Image from "next/image"
 import { Trees, ZoomIn, ZoomOut, RotateCcw } from "lucide-react"
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import Masonry, { ResponsiveMasonry } from "react-responsive-masonry"
 import type { Photo } from "@/types/wedding"
 
 interface GallerySectionProps {
@@ -218,52 +219,61 @@ export const GallerySection = ({ photos, isMobile }: GallerySectionProps) => {
           <div className="h-[1px] bg-[#2c5e1a]/30 w-12 sm:w-16"></div>
         </div>
 
-        {/* Gallery Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto">
-          {photos.map((photo, index) => {
-            let animation
-            let duration = 2000
+        {/* Masonry Gallery */}
+        <ResponsiveMasonry
+          columnsCountBreakPoints={{
+            350: 2,
+            750: 3,
+            1200: 4,
+          }}
+        >
+          <Masonry gutter="1rem">
+            {photos.map((photo, index) => {
+              let animation
+              let duration = 2000
 
-            // Animation pattern
-            switch (index % 3) {
-              case 0:
-                animation = "fade-left"
-                break
-              case 1:
-                animation = "fade-right"
-                break
-              case 2:
-                animation = "zoom-in"
-                duration = 2000
-                break
-            }
+              // Animation pattern
+              switch (index % 3) {
+                case 0:
+                  animation = "fade-left"
+                  break
+                case 1:
+                  animation = "fade-right"
+                  break
+                case 2:
+                  animation = "zoom-in"
+                  duration = 2000
+                  break
+              }
 
-            return (
-              <ImageZoomDialog key={photo.id} photo={photo}>
-                <div
-                  className="relative aspect-[3/4] overflow-hidden rounded-xl cursor-pointer group shadow-md hover:shadow-xl transition-shadow"
-                  data-aos={animation}
-                  data-aos-duration={duration}
-                  data-aos-easing="ease-out-cubic"
-                  data-aos-anchor-placement="top-bottom"
-                  data-aos-once="false"
-                  data-aos-offset="150"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
-                  <div className="absolute inset-0 border-4 border-[#87b577]/20 group-hover:border-[#87b577]/40 rounded-xl z-20 transition-colors"></div>
-                  <Image
-                    src={photo.src || "/placeholder.svg"}
-                    alt={photo.alt}
-                    fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-110"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    priority={index < 6}
-                  />
-                </div>
-              </ImageZoomDialog>
-            )
-          })}
-        </div>
+              return (
+                <ImageZoomDialog key={photo.id} photo={photo}>
+                  <div
+                    className="relative overflow-hidden rounded-xl cursor-pointer group shadow-md hover:shadow-xl transition-shadow"
+                    data-aos={animation}
+                    data-aos-duration={duration}
+                    data-aos-easing="ease-out-cubic"
+                    data-aos-anchor-placement="top-bottom"
+                    data-aos-once="false"
+                    data-aos-offset="150"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
+                    <div className="absolute inset-0 border-4 border-[#87b577]/20 group-hover:border-[#87b577]/40 rounded-xl z-20 transition-colors"></div>
+                    <Image
+                      src={photo.src || "/placeholder.svg"}
+                      alt={photo.alt}
+                      width={600}
+                      height={800}
+                      className="object-cover w-full h-auto transition-transform duration-700 group-hover:scale-110"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      priority={index < 6}
+                    />
+                  </div>
+                </ImageZoomDialog>
+              )
+            })}
+          </Masonry>
+        </ResponsiveMasonry>
       </div>
     </section>
   )
