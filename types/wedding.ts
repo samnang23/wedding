@@ -24,6 +24,24 @@ export interface Wish {
   guests: number
 }
 
+export interface Guest {
+  _id?: string
+  shortId: string // Short ID for invitation URL (e.g., "ELJD29")
+  name: string
+  invitationUrl?: string
+  createdAt?: Date
+  updatedAt?: Date
+}
+
+export interface WishData {
+  _id?: string
+  name: string
+  message: string
+  guests: number
+  guestName?: string // The name from the invitation URL
+  createdAt: Date
+}
+
 declare global {
   interface Window {
     confetti: (options: { particleCount: number; spread: number; origin: { y: number } }) => void

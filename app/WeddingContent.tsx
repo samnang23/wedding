@@ -23,10 +23,14 @@ import { GiftRegistrySection } from "@/components/wedding/sections/GiftRegistryS
 import { ThankYouSection } from "@/components/wedding/sections/ThankYouSection"
 import { Footer } from "@/components/wedding/sections/Footer"
 
-export default function WeddingContent() {
+interface WeddingContentProps {
+  guestNameFromInvitation?: string
+}
+
+export default function WeddingContent({ guestNameFromInvitation }: WeddingContentProps = {}) {
   const searchParams = useSearchParams()
   const [showInvitation, setShowInvitation] = useState(true)
-  const [guestName, setGuestName] = useState("ភ្ញៀវជាទីគោរព")
+  const [guestName, setGuestName] = useState(guestNameFromInvitation || "ភ្ញៀវជាទីគោរព")
   const [isLoaded, setIsLoaded] = useState(false)
   const [isBackgroundLoaded, setIsBackgroundLoaded] = useState(false)
   const [activeSection, setActiveSection] = useState<string | null>(null)
@@ -46,14 +50,22 @@ export default function WeddingContent() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const bgImageRef = useRef<HTMLImageElement | null>(null)
 
-  // Set mobile state and get guest name from URL
+  // Set mobile state and get guest name from URL or prop
   useEffect(() => {
     setIsMobile(window.innerWidth < 768)
+    
+    // If guest name was passed as prop (from invitation page), use it
+    if (guestNameFromInvitation) {
+      setGuestName(guestNameFromInvitation)
+      return
+    }
+    
+    // Otherwise, check URL params for backward compatibility
     const name = searchParams.get("name")
     if (name) {
       setGuestName(decodeURIComponent(name))
     }
-  }, [searchParams])
+  }, [searchParams, guestNameFromInvitation])
 
   // Initialize audio
   useEffect(() => {
@@ -313,26 +325,50 @@ export default function WeddingContent() {
     }, 50)
   }
 
-  const handleWishSubmit = (e: React.FormEvent) => {
+  const handleWishSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log({ wishName, wishMessage, wishGuests })
-
-    setIsWishSubmitted(true)
-
-    if (window.confetti) {
-      window.confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-      })
+    
+    if (!wishName.trim() || !wishMessage.trim()) {
+      return
     }
 
-    setTimeout(() => {
-      setWishName("")
-      setWishMessage("")
-      setWishGuests("1")
-      setIsWishSubmitted(false)
-    }, 5000)
+    try {
+      const response = await fetch("/api/wishes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: wishName.trim(),
+          message: wishMessage.trim(),
+          guests: parseInt(wishGuests) || 1,
+          guestName: guestName !== "ភ្ញៀវជាទីគោរព" ? guestName : undefined,
+        }),
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        setIsWishSubmitted(true)
+
+        if (window.confetti) {
+          window.confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+          })
+        }
+
+        setTimeout(() => {
+          setWishName("")
+          setWishMessage("")
+          setWishGuests("1")
+          setIsWishSubmitted(false)
+        }, 5000)
+      } else {
+        console.error("Failed to submit wish:", data.error)
+      }
+    } catch (error) {
+      console.error("Error submitting wish:", error)
+    }
   }
 
   const scrollToSection = (id: string) => {

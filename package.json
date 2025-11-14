@@ -6,13 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:test": "tsx scripts/test-connection.ts",
+    "db:init": "tsx scripts/init-db.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
     "@lottiefiles/dotlottie-react": "^0.17.5",
     "@lottiefiles/lottie-player": "^2.0.12",
+    "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-tabs": "^1.1.13",
     "aos": "^2.3.4",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",
@@ -21,6 +25,7 @@
     "framer-motion": "^12.23.24",
     "input-otp": "1.4.1",
     "lucide-react": "^0.545.0",
+    "mongodb": "^7.0.0",
     "next": "^15.5.4",
     "next-themes": "^0.4.4",
     "react-responsive-masonry": "^2.6.0",
@@ -36,8 +41,10 @@
     "@types/node": "^22",
     "@types/react": "19.2.2",
     "@types/react-responsive-masonry": "^2.6.0",
+    "dotenv": "^17.2.3",
     "postcss": "^8",
     "tailwindcss": "^3.4.17",
+    "tsx": "^4.20.6",
     "typescript": "^5"
   }
 }

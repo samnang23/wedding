@@ -143,7 +143,7 @@ const ImageZoomDialog = ({ photo, children }: ImageZoomDialogProps) => {
         >
           <div
             ref={imageRef}
-            className="relative w-full h-full transition-transform duration-[2000ms]"
+            className="relative w-full h-full transition-transform"
             style={{
               transform: `scale(${zoom}) translate(${position.x / zoom}px, ${position.y / zoom}px)`,
               transformOrigin: "center center",
