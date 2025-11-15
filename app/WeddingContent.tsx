@@ -75,30 +75,15 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
     }
   }, [searchParams, guestNameFromInvitation, guestShortIdFromInvitation])
 
-  // Initialize audio
+  // Initialize audio settings (but don't auto-play)
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
 
     audio.volume = 0.3
     audio.loop = true
-
-    const playAudio = () => {
-      if (!isMuted) {
-        audio.play().catch(err => {
-          console.log("Auto-play failed:", err)
-        })
-      }
-    }
-
-    playAudio()
-
-    return () => {
-      if (audio) {
-        audio.pause()
-      }
-    }
-  }, [isMuted])
+    // Don't auto-play - wait for invitation button click
+  }, [])
 
   const toggleMute = () => {
     const audio = audioRef.current
@@ -110,6 +95,45 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
       audio.pause()
     }
     setIsMuted(!isMuted)
+  }
+
+  // Video control handlers - pause music when video plays, resume when video stops
+  // Only works if music was already playing (after invitation opened)
+  const handleVideoPlay = () => {
+    const audio = audioRef.current
+    if (!audio) return
+    
+    // Pause the background music when video starts playing
+    // Only if music is currently playing and not manually muted
+    if (!audio.paused && !isMuted) {
+      audio.pause()
+    }
+  }
+
+  const handleVideoPause = () => {
+    const audio = audioRef.current
+    if (!audio) return
+    
+    // Resume music when video is paused (only if not manually muted)
+    // Only resume if music was playing before (not manually muted)
+    if (audio.paused && !isMuted && showInvitation === false) {
+      audio.play().catch(err => {
+        console.log("Failed to resume audio:", err)
+      })
+    }
+  }
+
+  const handleVideoEnd = () => {
+    const audio = audioRef.current
+    if (!audio) return
+    
+    // Resume music when video ends (only if not manually muted)
+    // Only resume if music was playing before (not manually muted)
+    if (audio.paused && !isMuted && showInvitation === false) {
+      audio.play().catch(err => {
+        console.log("Failed to resume audio:", err)
+      })
+    }
   }
 
   // Countdown timer
@@ -235,43 +259,8 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
       confettiScript.async = true
       document.body.appendChild(confettiScript)
 
-      // Audio autoplay handling
-      const tryPlayAudio = () => {
-        if (audioRef.current) {
-          audioRef.current.volume = 0
-          audioRef.current.loop = true
-          audioRef.current.muted = false
-
-          const playPromise = audioRef.current.play()
-
-          if (playPromise !== undefined) {
-            playPromise.then(() => {
-              console.log('Auto-play started successfully')
-              setIsMuted(false)
-              fadeInVolume()
-            }).catch(error => {
-              console.log("Initial audio autoplay failed - expected due to browser policies:", error)
-            })
-          }
-        }
-      }
-
-      const markUserInteraction = () => {
-        tryPlayAudio()
-      }
-
-      const interactionEvents = [
-        'click', 'touchstart', 'touchend', 'mousedown',
-        'keydown', 'scroll', 'mousemove', 'pointerdown'
-      ]
-
-      interactionEvents.forEach(event => {
-        document.addEventListener(event, markUserInteraction, { once: true })
-      })
-
-      setTimeout(tryPlayAudio, 500)
-      setTimeout(tryPlayAudio, 2000)
-      setTimeout(tryPlayAudio, 4000)
+      // Music will only start when invitation button is clicked (handleOpenInvitation)
+      // No auto-play here
 
       return () => {
         window.removeEventListener("scroll", handleScroll)
@@ -283,10 +272,6 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
         if (document.head.contains(link)) {
           document.head.removeChild(link)
         }
-
-        interactionEvents.forEach(event => {
-          document.removeEventListener(event, markUserInteraction)
-        })
       }
     }
 
@@ -313,25 +298,7 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
     }
   }, [showInvitation])
 
-  const fadeInVolume = () => {
-    const audio = audioRef.current
-    if (!audio) return
-
-    if (audio.paused) {
-      audio.play().catch(console.log)
-    }
-
-    let currentVolume = audio.volume
-    const targetVolume = 0.3
-    const fadeInterval = setInterval(() => {
-      currentVolume = Math.min(currentVolume + 0.05, targetVolume)
-      audio.volume = currentVolume
-
-      if (currentVolume >= targetVolume) {
-        clearInterval(fadeInterval)
-      }
-    }, 50)
-  }
+  // Removed fadeInVolume - music now only starts when invitation button is clicked
 
   const handleWishSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -529,6 +496,43 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
   // Handle opening invitation
   const handleOpenInvitation = () => {
     setShowInvitation(false)
+    
+    // Wait a tiny bit for audio element to be available, then play music
+    setTimeout(() => {
+      const audio = audioRef.current
+      if (audio) {
+        // Set volume and ensure it's ready
+        audio.volume = 0.3
+        audio.loop = true
+        
+        // Play immediately
+        const playPromise = audio.play()
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              console.log("Music started successfully")
+              setIsMuted(false) // Ensure muted state is false
+            })
+            .catch(err => {
+              console.error("Failed to start music:", err)
+              // Try again after a short delay
+              setTimeout(() => {
+                audio.play().catch(e => {
+                  console.error("Retry failed:", e)
+                })
+              }, 100)
+            })
+        } else {
+          // Fallback if play() doesn't return a promise
+          audio.play().catch(err => {
+            console.error("Failed to start music (fallback):", err)
+          })
+        }
+      } else {
+        console.error("Audio element not found")
+      }
+    }, 50)
+    
     // Force scroll to top when entering wedding content
     setTimeout(() => {
       window.scrollTo(0, 0)
@@ -537,7 +541,18 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
 
   // Show invitation first
   if (showInvitation) {
-    return <Invitation guestName={guestName} onOpen={handleOpenInvitation} />
+    return (
+      <>
+        {/* Audio element must be rendered even when invitation is showing */}
+        <audio
+          ref={audioRef}
+          src="/music/Nothing's Gonna Change My Love for You  George Benson - saxophone cover.mp3"
+          loop
+          preload="auto"
+        />
+        <Invitation guestName={guestName} onOpen={handleOpenInvitation} />
+      </>
+    )
   }
 
   return (
@@ -665,7 +680,14 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
            <NewSection scrollToSection={scrollToSection} />
 
           {/* Gallery Section */}
-          <GallerySection photos={photos} isMobile={isMobile} />
+          <GallerySection 
+            photos={photos} 
+            isMobile={isMobile}
+            videoUrl="/images/pre-wedding/IMG_0556.MOV"
+            onVideoPlay={handleVideoPlay}
+            onVideoPause={handleVideoPause}
+            onVideoEnd={handleVideoEnd}
+          />
 
          
 

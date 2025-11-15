@@ -11,6 +11,10 @@ import type { Photo } from "@/types/wedding"
 interface GallerySectionProps {
   photos: Photo[]
   isMobile: boolean
+  videoUrl?: string // Optional video URL to display at the top
+  onVideoPlay?: () => void // Callback when video starts playing
+  onVideoPause?: () => void // Callback when video pauses
+  onVideoEnd?: () => void // Callback when video ends
 }
 
 interface ImageZoomDialogProps {
@@ -201,7 +205,84 @@ const ImageZoomDialog = ({ photo, children }: ImageZoomDialogProps) => {
   )
 }
 
-export const GallerySection = ({ photos, isMobile }: GallerySectionProps) => {
+export const GallerySection = ({ photos, isMobile, videoUrl, onVideoPlay, onVideoPause, onVideoEnd }: GallerySectionProps) => {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const videoContainerRef = useRef<HTMLDivElement>(null)
+  const userPausedRef = useRef(false) // Track if user manually paused
+  const wasVisibleRef = useRef(false) // Track if video was previously visible
+
+  const handleVideoPlay = () => {
+    // If video starts playing, clear the manual pause flag
+    userPausedRef.current = false
+    onVideoPlay?.()
+  }
+
+  const handleVideoPause = () => {
+    // Check if pause was user-initiated (only if video is currently visible)
+    const video = videoRef.current
+    if (video && wasVisibleRef.current && !video.ended) {
+      // This is likely a user action if video is visible
+      userPausedRef.current = true
+    }
+    onVideoPause?.()
+  }
+
+  const handleVideoEnd = () => {
+    userPausedRef.current = false // Reset when video ends
+    onVideoEnd?.()
+  }
+
+  // Auto-play video when it enters viewport, pause when it leaves
+  useEffect(() => {
+    const video = videoRef.current
+    const container = videoContainerRef.current
+    
+    if (!video || !container || !videoUrl) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            // Video is visible - play it
+            wasVisibleRef.current = true
+            
+            // Auto-play when scrolling into view (always, even if user paused before)
+            // This allows video to play again when scrolling back
+            const playPromise = video.play()
+            if (playPromise !== undefined) {
+              playPromise
+                .then(() => {
+                  // Successfully started playing, clear user pause flag
+                  userPausedRef.current = false
+                })
+                .catch((error) => {
+                  console.log("Auto-play prevented:", error)
+                })
+            }
+          } else {
+            // Video is not visible - pause it
+            wasVisibleRef.current = false
+            
+            // Only pause if it's currently playing (don't interfere with already paused state)
+            if (!video.paused) {
+              video.pause()
+            }
+          }
+        })
+      },
+      {
+        threshold: 0.5, // Trigger when 50% of video is visible
+        rootMargin: '0px'
+      }
+    )
+
+    observer.observe(container)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [videoUrl])
+
   return (
     <section id="gallery" className="py-12 sm:py-16 relative w-full">
       <div className="container mx-auto px-3 sm:px-6 lg:px-8">
@@ -222,6 +303,23 @@ export const GallerySection = ({ photos, isMobile }: GallerySectionProps) => {
           <Trees className="h-4 w-4 sm:h-6 sm:w-6 mx-3 sm:mx-4 text-[#2c5e1a] animate-sway" />
           <div className="h-[1px] bg-[#2c5e1a]/30 w-12 sm:w-16"></div>
         </div>
+
+        {/* Video at the top */}
+        {videoUrl && (
+          <div ref={videoContainerRef} className="mb-10">
+            <video
+              ref={videoRef}
+              className="w-full max-w-3xl mx-auto rounded-lg"
+              controls
+              src={videoUrl}
+              onPlay={handleVideoPlay}
+              onPause={handleVideoPause}
+              onEnded={handleVideoEnd}
+              playsInline
+              muted={false}
+            ></video>
+          </div>
+        )}
 
         {/* Masonry Gallery */}
         <ResponsiveMasonry
