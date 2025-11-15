@@ -210,6 +210,8 @@ export const GallerySection = ({ photos, isMobile, videoUrl, onVideoPlay, onVide
   const videoContainerRef = useRef<HTMLDivElement>(null)
   const userPausedRef = useRef(false) // Track if user manually paused
   const wasVisibleRef = useRef(false) // Track if video was previously visible
+  const playPromiseRef = useRef<Promise<void> | null>(null) // Track pending play promise
+  const isPausingRef = useRef(false) // Track if we're currently pausing
 
   const handleVideoPlay = () => {
     // If video starts playing, clear the manual pause flag
@@ -220,15 +222,17 @@ export const GallerySection = ({ photos, isMobile, videoUrl, onVideoPlay, onVide
   const handleVideoPause = () => {
     // Check if pause was user-initiated (only if video is currently visible)
     const video = videoRef.current
-    if (video && wasVisibleRef.current && !video.ended) {
-      // This is likely a user action if video is visible
+    if (video && wasVisibleRef.current && !video.ended && !isPausingRef.current) {
+      // This is likely a user action if video is visible and we're not programmatically pausing
       userPausedRef.current = true
     }
+    isPausingRef.current = false // Reset pause flag
     onVideoPause?.()
   }
 
   const handleVideoEnd = () => {
     userPausedRef.current = false // Reset when video ends
+    playPromiseRef.current = null // Clear play promise
     onVideoEnd?.()
   }
 
@@ -246,26 +250,61 @@ export const GallerySection = ({ photos, isMobile, videoUrl, onVideoPlay, onVide
             // Video is visible - play it
             wasVisibleRef.current = true
             
-            // Auto-play when scrolling into view (always, even if user paused before)
-            // This allows video to play again when scrolling back
-            const playPromise = video.play()
-            if (playPromise !== undefined) {
-              playPromise
-                .then(() => {
-                  // Successfully started playing, clear user pause flag
-                  userPausedRef.current = false
-                })
-                .catch((error) => {
-                  console.log("Auto-play prevented:", error)
-                })
+            // Don't auto-play if user manually paused
+            if (userPausedRef.current) {
+              return
+            }
+            
+            // If there's a pending play promise, wait for it or cancel it
+            if (playPromiseRef.current) {
+              return
+            }
+            
+            // Only play if video is paused
+            if (video.paused) {
+              const playPromise = video.play()
+              if (playPromise !== undefined) {
+                playPromiseRef.current = playPromise
+                playPromise
+                  .then(() => {
+                    // Successfully started playing, clear user pause flag
+                    userPausedRef.current = false
+                    playPromiseRef.current = null
+                  })
+                  .catch((error) => {
+                    // Handle AbortError gracefully (play was interrupted)
+                    if (error.name !== 'AbortError') {
+                      console.log("Auto-play prevented:", error)
+                    }
+                    playPromiseRef.current = null
+                  })
+              }
             }
           } else {
             // Video is not visible - pause it
             wasVisibleRef.current = false
             
+            // Cancel any pending play promise
+            if (playPromiseRef.current) {
+              playPromiseRef.current = null
+            }
+            
             // Only pause if it's currently playing (don't interfere with already paused state)
-            if (!video.paused) {
-              video.pause()
+            if (!video.paused && !video.ended) {
+              isPausingRef.current = true
+              try {
+                video.pause()
+              } catch (error: any) {
+                // Handle any pause errors gracefully
+                if (error?.name !== 'AbortError') {
+                  console.log("Pause error:", error)
+                }
+              } finally {
+                // Reset pause flag after a short delay to allow pause event to fire
+                setTimeout(() => {
+                  isPausingRef.current = false
+                }, 100)
+              }
             }
           }
         })
@@ -280,6 +319,9 @@ export const GallerySection = ({ photos, isMobile, videoUrl, onVideoPlay, onVide
 
     return () => {
       observer.disconnect()
+      // Clean up any pending promises
+      playPromiseRef.current = null
+      isPausingRef.current = false
     }
   }, [videoUrl])
 
