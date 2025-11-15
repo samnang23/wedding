@@ -29,6 +29,8 @@ export interface Guest {
   shortId: string // Short ID for invitation URL (e.g., "ELJD29")
   name: string
   invitationUrl?: string
+  isSent?: boolean // Whether the invitation has been sent
+  sentAt?: Date // When the invitation was marked as sent
   createdAt?: Date
   updatedAt?: Date
 }

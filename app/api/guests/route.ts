@@ -10,6 +10,8 @@ const serializeGuest = (guest: any): Guest => ({
   shortId: guest.shortId,
   name: guest.name,
   invitationUrl: guest.invitationUrl,
+  isSent: guest.isSent || false,
+  sentAt: guest.sentAt,
   createdAt: guest.createdAt,
   updatedAt: guest.updatedAt,
 })
@@ -28,17 +30,34 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const limit = parseInt(searchParams.get('limit') || '10')
     const skip = parseInt(searchParams.get('skip') || '0')
+    const search = searchParams.get('search') || ''
 
     const db = await getDb()
+    
+    // Build search query
+    let query: any = {}
+    if (search.trim()) {
+      // Case-insensitive search across name, shortId, and invitationUrl
+      query = {
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { shortId: { $regex: search, $options: 'i' } },
+          { invitationUrl: { $regex: search, $options: 'i' } },
+        ]
+      }
+    }
+
+    // Fetch guests with search filter
     const guests = await db
       .collection<Guest>('guests')
-      .find({})
+      .find(query)
       .sort({ createdAt: -1 })
       .limit(limit)
       .skip(skip)
       .toArray()
 
-    const total = await db.collection<Guest>('guests').countDocuments()
+    // Get total count with search filter
+    const total = await db.collection<Guest>('guests').countDocuments(query)
     
     return NextResponse.json({ 
       success: true, 
@@ -46,6 +65,7 @@ export async function GET(request: NextRequest) {
       total,
       limit,
       skip,
+      search: search || null,
     })
   } catch (error: any) {
     console.error('Error fetching guests:', error)

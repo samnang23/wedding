@@ -143,7 +143,7 @@ export default function Invitation({ guestName = "ភ្ញៀវជាទីគ
           </div>
 
           {/* Invitation Text */}
-          <div className="text-center space-y-6 sm:space-y-8 max-w-md mx-auto">
+          <div className="text-center space-y-6 sm:space-y-8 w-full">
             <div className="animate-fadeIn" style={{ animationDelay: '0.4s', opacity: 0 }}>
               <p className="font-moul text-xl sm:text-2xl text-[#2c5e1a] mb-4 flex items-center justify-center gap-2">
                 <Heart className="w-5 h-5 animate-pulse" />
@@ -153,7 +153,7 @@ export default function Invitation({ guestName = "ភ្ញៀវជាទីគ
             </div>
 
             <div className="animate-fadeIn" style={{ animationDelay: '0.6s', opacity: 0 }}>
-              <h1 className="font-moul text-3xl sm:text-4xl md:text-5xl text-[#2c5e1a] mb-2 leading-relaxed">
+              <h1 className="font-moul text-xl sm:text-4xl md:text-5xl text-[#2c5e1a] mb-2 leading-relaxed">
                 {guestName}
               </h1>
             </div>

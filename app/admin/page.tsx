@@ -54,6 +54,8 @@ import {
   Share2,
   MessageCircle,
   Send,
+  Search,
+  X,
 } from "lucide-react"
 import {
   Pagination,
@@ -62,7 +64,6 @@ import {
   PaginationItem,
 } from "@/components/ui/pagination"
 import type { Guest, WishData } from "@/types/wedding"
-import { encode } from "punycode"
 
 export default function AdminPage() {
   const router = useRouter()
@@ -90,6 +91,10 @@ export default function AdminPage() {
   
   // Bulk selection for wishes
   const [selectedWishes, setSelectedWishes] = useState<Set<string>>(new Set())
+  
+  // Search/filter state
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchDebounce, setSearchDebounce] = useState("")
 
   // Check authentication
   useEffect(() => {
@@ -113,12 +118,13 @@ export default function AdminPage() {
     checkAuth()
   }, [router])
 
-  // Fetch guests with pagination
-  const fetchGuests = async (page: number = currentPage) => {
+  // Fetch guests with pagination and search
+  const fetchGuests = async (page: number = currentPage, search: string = searchDebounce) => {
     setLoading(true)
     try {
       const skip = (page - 1) * pageSize
-      const response = await fetch(`/api/guests?limit=${pageSize}&skip=${skip}`)
+      const searchParam = search.trim() ? `&search=${encodeURIComponent(search.trim())}` : ''
+      const response = await fetch(`/api/guests?limit=${pageSize}&skip=${skip}${searchParam}`)
       const data = await response.json()
       if (data.success) {
         setGuests(data.data)
@@ -134,6 +140,24 @@ export default function AdminPage() {
       setLoading(false)
     }
   }
+
+  // Debounce search query to avoid too many API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchDebounce(searchQuery)
+    }, 300) // 300ms debounce
+
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // Fetch guests when search debounce changes or on mount
+  useEffect(() => {
+    if (authenticated) {
+      // Reset to page 1 when search changes
+      fetchGuests(1, searchDebounce)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchDebounce, authenticated])
 
   // Fetch wishes
   const fetchWishes = async () => {
@@ -264,8 +288,8 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (authenticated) {
-      fetchGuests(1)
       fetchWishes()
+      // fetchGuests will be called by the searchDebounce effect
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authenticated])
@@ -307,7 +331,7 @@ export default function AdminPage() {
         const data = await response.json()
         if (data.success) {
           toast.success("Guest updated successfully")
-          fetchGuests(currentPage)
+          fetchGuests(currentPage, searchDebounce)
           resetForm()
         } else {
           toast.error(data.error || "Failed to update guest")
@@ -324,7 +348,7 @@ export default function AdminPage() {
         if (data.success) {
           toast.success("Guest created successfully")
           // Go to first page to see the new guest
-          fetchGuests(1)
+          fetchGuests(1, searchDebounce)
           resetForm()
         } else {
           toast.error(data.error || "Failed to create guest")
@@ -333,6 +357,28 @@ export default function AdminPage() {
     } catch (error) {
       console.error("Error saving guest:", error)
       toast.error("Failed to save guest")
+    }
+  }
+
+  // Mark guest as sent/unsent
+  const handleMarkAsSent = async (id: string, isSent: boolean) => {
+    try {
+      const response = await fetch(`/api/guests/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isSent }),
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        toast.success(isSent ? "Guest marked as sent" : "Guest marked as not sent")
+        fetchGuests(currentPage, searchDebounce)
+      } else {
+        toast.error(data.error || "Failed to update guest status")
+      }
+    } catch (error) {
+      console.error("Error updating guest status:", error)
+      toast.error("Failed to update guest status")
     }
   }
 
@@ -349,9 +395,9 @@ export default function AdminPage() {
         // If current page becomes empty, go to previous page
         const remainingOnPage = guests.length - 1
         if (remainingOnPage === 0 && currentPage > 1) {
-          fetchGuests(currentPage - 1)
+          fetchGuests(currentPage - 1, searchDebounce)
         } else {
-          fetchGuests(currentPage)
+          fetchGuests(currentPage, searchDebounce)
         }
       } else {
         toast.error(data.error || "Failed to delete guest")
@@ -658,22 +704,46 @@ export default function AdminPage() {
           <TabsContent value="guests" className="space-y-4">
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
                     <CardTitle>Distinguished Guests</CardTitle>
                     <CardDescription>
                       Manage your guest list and generate invitation URLs
                     </CardDescription>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fetchGuests(currentPage)}
-                    disabled={loading}
-                  >
-                    <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-                    Refresh
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {/* Search Input */}
+                    <div className="relative flex-1 sm:flex-initial sm:w-64">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#2c3e1a]/50 w-4 h-4" />
+                      <Input
+                        type="text"
+                        placeholder="Search guests..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9 pr-9"
+                      />
+                      {searchQuery && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSearchQuery("")}
+                          className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fetchGuests(currentPage, searchDebounce)}
+                      disabled={loading}
+                      className="shrink-0"
+                    >
+                      <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+                      <span className="hidden sm:inline">Refresh</span>
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -683,121 +753,282 @@ export default function AdminPage() {
                   </div>
                 ) : guests.length === 0 ? (
                   <div className="text-center py-8 text-[#2c3e1a]/50">
-                    No guests yet. Add your first guest to get started!
+                    {searchQuery ? "No guests found matching your search." : "No guests yet. Add your first guest to get started!"}
                   </div>
                 ) : (
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Invitation URL</TableHead>
-                          <TableHead>Created</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {guests.map((guest) => (
-                          <TableRow key={guest._id}>
-                            <TableCell className="font-medium">{guest.name}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <a
-                                  href={guest.invitationUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-[#2c5e1a] hover:underline text-sm truncate max-w-xs"
-                                >
-                                  {guest.invitationUrl}
-                                </a>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleCopyUrl(guest.invitationUrl || "")}
-                                  className="h-8 w-8 p-0"
-                                  title="Copy URL"
-                                >
-                                  {copiedUrl === guest.invitationUrl ? (
-                                    <Check className="w-4 h-4 text-green-600" />
-                                  ) : (
-                                    <Copy className="w-4 h-4" />
-                                  )}
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleShareInvitation(guest)}
-                                  className="h-8 w-8 p-0"
-                                  title="Share invitation template"
-                                >
-                                  <Share2 className="w-4 h-4 text-[#87b577]" />
+                  <>
+                    {searchQuery && (
+                      <div className="mb-4 text-sm text-[#2c3e1a]/70">
+                        Found {totalGuests} guest{totalGuests !== 1 ? 's' : ''} matching "{searchQuery}"
+                      </div>
+                    )}
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block rounded-md border overflow-x-auto">
+                      <Table className="w-full">
+                        <TableHeader> 
+                          <TableRow>
+                            <TableHead className="w-16">No</TableHead>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Invitation URL</TableHead>
+                            <TableHead>Sent</TableHead>
+                            <TableHead>Created</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {guests.map((guest, index) => (
+                            <TableRow key={guest._id} className={guest.isSent ? "bg-green-50/50" : ""}>
+                              <TableCell className="text-sm text-[#2c3e1a]/70">
+                                {((currentPage - 1) * pageSize) + index + 1}
+                              </TableCell>
+                              <TableCell className="font-medium">{guest.name}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1 flex-wrap">
+                                  <a
+                                    href={guest.invitationUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[#2c5e1a] hover:underline text-sm truncate max-w-xs"
+                                  >
+                                    {guest.invitationUrl}
+                                  </a>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleCopyUrl(guest.invitationUrl || "")}
+                                    className="h-8 w-8 p-0"
+                                    title="Copy URL"
+                                  >
+                                    {copiedUrl === guest.invitationUrl ? (
+                                      <Check className="w-4 h-4 text-green-600" />
+                                    ) : (
+                                      <Copy className="w-4 h-4" />
+                                    )}
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleShareInvitation(guest)}
+                                    className="h-8 w-8 p-0"
+                                    title="Share invitation template"
+                                  >
+                                    <Share2 className="w-4 h-4 text-[#87b577]" />
                                 </Button>
                               </div>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleMarkAsSent(guest._id!, !guest.isSent)}
+                                className={`h-8 px-3 ${
+                                  guest.isSent 
+                                    ? "bg-green-100 text-green-700 hover:bg-green-200" 
+                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                }`}
+                                title={guest.isSent ? "Mark as not sent" : "Mark as sent"}
+                              >
+                                {guest.isSent ? (
+                                  <>
+                                    <Check className="w-4 h-4 mr-1" />
+                                    Sent
+                                  </>
+                                ) : (
+                                  "Mark as sent"
+                                )}
+                              </Button>
                             </TableCell>
                             <TableCell className="text-sm text-[#2c3e1a]/70">
                               {formatDate(guest.createdAt)}
                             </TableCell>
                             <TableCell className="text-right">
-                              <div className="flex items-center justify-end gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleEditGuest(guest)}
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button variant="ghost" size="sm" className="text-red-600">
-                                      <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        This will permanently delete the guest and their invitation
-                                        URL. This action cannot be undone.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction
-                                        onClick={() => guest._id && handleDeleteGuest(guest._id)}
-                                        className="bg-red-600 hover:bg-red-700"
-                                      >
-                                        Delete
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
+                                <div className="flex items-center justify-end gap-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleEditGuest(guest)}
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button variant="ghost" size="sm" className="text-red-600">
+                                        <Trash2 className="w-4 h-4" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          This will permanently delete the guest and their invitation
+                                          URL. This action cannot be undone.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => guest._id && handleDeleteGuest(guest._id)}
+                                          className="bg-red-600 hover:bg-red-700"
+                                        >
+                                          Delete
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    {/* Mobile Card View */}
+                    <div className="md:hidden space-y-3">
+                      {guests.map((guest, index) => (
+                        <Card key={guest._id} className={`border-[#87b577]/30 ${guest.isSent ? "bg-green-50/50" : ""}`}>
+                          <CardContent className="pt-4">
+                            <div className="space-y-3">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs text-[#2c3e1a]/70 font-medium">
+                                      #{((currentPage - 1) * pageSize) + index + 1}
+                                    </span>
+                                    <h3 className="font-semibold text-[#2c5e1a]">{guest.name}</h3>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleEditGuest(guest)}
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-600">
+                                        <Trash2 className="w-4 h-4" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          This will permanently delete the guest and their invitation
+                                          URL. This action cannot be undone.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => guest._id && handleDeleteGuest(guest._id)}
+                                          className="bg-red-600 hover:bg-red-700"
+                                        >
+                                          Delete
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </div>
                               </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                              
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-[#2c3e1a]/70 font-medium">URL:</span>
+                                  <a
+                                    href={guest.invitationUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[#2c5e1a] hover:underline text-xs flex-1 truncate"
+                                  >
+                                    {guest.invitationUrl}
+                                  </a>
+                                </div>
+                                
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-[#2c3e1a]/70 font-medium">Created:</span>
+                                  <span className="text-xs text-[#2c3e1a]/70">{formatDate(guest.createdAt)}</span>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2 pt-2 border-t">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleMarkAsSent(guest._id!, !guest.isSent)}
+                                  className={`flex-1 text-xs ${
+                                    guest.isSent 
+                                      ? "bg-green-100 text-green-700 hover:bg-green-200" 
+                                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                  }`}
+                                >
+                                  {guest.isSent ? (
+                                    <>
+                                      <Check className="w-3 h-3 mr-1" />
+                                      Sent
+                                    </>
+                                  ) : (
+                                    "Mark as sent"
+                                  )}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleCopyUrl(guest.invitationUrl || "")}
+                                  className="flex-1 text-xs"
+                                >
+                                  {copiedUrl === guest.invitationUrl ? (
+                                    <>
+                                      <Check className="w-3 h-3 mr-1 text-green-600" />
+                                      Copied
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Copy className="w-3 h-3 mr-1" />
+                                      Copy
+                                    </>
+                                  )}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleShareInvitation(guest)}
+                                  className="flex-1 text-xs"
+                                >
+                                  <Share2 className="w-3 h-3 mr-1 text-[#87b577]" />
+                                  Share
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </>
                 )}
                 
                 {/* Pagination */}
                 {!loading && totalGuests > 0 && (
-                  <div className="mt-4 flex items-center justify-between">
-                    <div className="text-sm text-[#2c3e1a]/70">
+                  <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="text-xs sm:text-sm text-[#2c3e1a]/70 text-center sm:text-left">
                       Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalGuests)} of {totalGuests} guests
                     </div>
                     <Pagination>
-                      <PaginationContent>
+                      <PaginationContent className="flex-wrap">
                         <PaginationItem>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => currentPage > 1 && fetchGuests(currentPage - 1)}
+                            onClick={() => currentPage > 1 && fetchGuests(currentPage - 1, searchDebounce)}
                             disabled={currentPage === 1}
-                            className="gap-1"
+                            className="gap-1 text-xs sm:text-sm"
                           >
-                            <ChevronLeft className="h-4 w-4" />
-                            <span>Previous</span>
+                            <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <span className="hidden sm:inline">Previous</span>
+                            <span className="sm:hidden">Prev</span>
                           </Button>
                         </PaginationItem>
                         
@@ -826,7 +1057,7 @@ export default function AdminPage() {
                                   <Button
                                     variant={currentPage === page ? "outline" : "ghost"}
                                     size="sm"
-                                    onClick={() => fetchGuests(page)}
+                                    onClick={() => fetchGuests(page, searchDebounce)}
                                     className="min-w-[2.5rem]"
                                   >
                                     {page}
@@ -840,12 +1071,13 @@ export default function AdminPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => currentPage < Math.ceil(totalGuests / pageSize) && fetchGuests(currentPage + 1)}
+                            onClick={() => currentPage < Math.ceil(totalGuests / pageSize) && fetchGuests(currentPage + 1, searchDebounce)}
                             disabled={currentPage >= Math.ceil(totalGuests / pageSize)}
-                            className="gap-1"
+                            className="gap-1 text-xs sm:text-sm"
                           >
-                            <span>Next</span>
-                            <ChevronRight className="h-4 w-4" />
+                            <span className="hidden sm:inline">Next</span>
+                            <span className="sm:hidden">Next</span>
+                            <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
                           </Button>
                         </PaginationItem>
                       </PaginationContent>
@@ -860,7 +1092,7 @@ export default function AdminPage() {
           <TabsContent value="wishes" className="space-y-4">
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
                     <CardTitle>Guest Wishes</CardTitle>
                     <CardDescription>
@@ -872,11 +1104,12 @@ export default function AdminPage() {
                     size="sm"
                     onClick={fetchWishes}
                     disabled={wishesLoading}
+                    className="shrink-0"
                   >
                     <RefreshCw
                       className={`w-4 h-4 mr-2 ${wishesLoading ? "animate-spin" : ""}`}
                     />
-                    Refresh
+                    <span className="hidden sm:inline">Refresh</span>
                   </Button>
                 </div>
               </CardHeader>
@@ -890,7 +1123,7 @@ export default function AdminPage() {
                 ) : (
                   <div className="space-y-4">
                     {/* Bulk Actions Bar */}
-                    <div className="flex items-center justify-between p-3 bg-[#87b577]/10 rounded-lg border border-[#87b577]/20">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 bg-[#87b577]/10 rounded-lg border border-[#87b577]/20">
                       <div className="flex items-center gap-3">
                         <input
                           type="checkbox"
@@ -903,30 +1136,33 @@ export default function AdminPage() {
                         </span>
                       </div>
                       {selectedWishes.size > 0 && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleBulkToggleVisibility(true)}
-                            className="text-[#2c5e1a] hover:text-[#87b577]"
+                            className="text-[#2c5e1a] hover:text-[#87b577] text-xs sm:text-sm"
                           >
-                            <EyeOff className="w-4 h-4 mr-2" />
-                            Hide Selected
+                            <EyeOff className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                            <span className="hidden sm:inline">Hide Selected</span>
+                            <span className="sm:hidden">Hide</span>
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleBulkToggleVisibility(false)}
-                            className="text-[#2c5e1a] hover:text-[#87b577]"
+                            className="text-[#2c5e1a] hover:text-[#87b577] text-xs sm:text-sm"
                           >
-                            <Eye className="w-4 h-4 mr-2" />
-                            Show Selected
+                            <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                            <span className="hidden sm:inline">Show Selected</span>
+                            <span className="sm:hidden">Show</span>
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Delete Selected
+                              <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 text-xs sm:text-sm">
+                                <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                <span className="hidden sm:inline">Delete Selected</span>
+                                <span className="sm:hidden">Delete</span>
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
@@ -957,10 +1193,10 @@ export default function AdminPage() {
                         key={wish._id} 
                         className={`border-[#87b577]/30 ${wish.isHidden ? 'opacity-60 bg-gray-50' : ''} ${selectedWishes.has(wish._id!) ? 'ring-2 ring-[#87b577]' : ''}`}
                       >
-                        <CardContent className="pt-6">
-                          <div className="space-y-2">
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <CardContent className="pt-4 sm:pt-6">
+                          <div className="space-y-3">
+                            <div className="flex items-start justify-between gap-2 sm:gap-4">
+                              <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
                                 <input
                                   type="checkbox"
                                   checked={selectedWishes.has(wish._id!)}
@@ -969,7 +1205,7 @@ export default function AdminPage() {
                                 />
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 flex-wrap">
-                                    <p className="font-semibold text-[#2c5e1a]">{wish.name}</p>
+                                    <p className="font-semibold text-[#2c5e1a] text-sm sm:text-base">{wish.name}</p>
                                     {wish.isHidden && (
                                       <span className="text-xs px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full">
                                         Hidden
@@ -977,66 +1213,68 @@ export default function AdminPage() {
                                     )}
                                   </div>
                                   {wish.guestName && wish.guestName !== wish.name && (
-                                    <p className="text-sm text-[#2c3e1a]/70 mt-1">
+                                    <p className="text-xs sm:text-sm text-[#2c3e1a]/70 mt-1">
                                       From: {wish.guestName}
                                     </p>
                                   )}
                                 </div>
                               </div>
-                              <div className="flex items-center gap-4 flex-shrink-0">
-                                <div className="flex items-center gap-1 text-sm text-[#2c3e1a]/70">
-                                  <Users className="w-4 h-4" />
+                              <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-4 flex-shrink-0">
+                                <div className="flex items-center gap-1 text-xs sm:text-sm text-[#2c3e1a]/70">
+                                  <Users className="w-3 h-3 sm:w-4 sm:h-4" />
                                   {wish.guests}
                                 </div>
-                                <div className="text-sm text-[#2c3e1a]/70">{formatDate(wish.createdAt)}</div>
-                                <div className="flex items-center gap-2 ml-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleToggleWishVisibility(wish._id!, wish.isHidden || false)}
-                                    className="text-[#2c5e1a] hover:text-[#87b577]"
-                                  >
-                                    {wish.isHidden ? (
-                                      <>
-                                        <Eye className="w-4 h-4 mr-2" />
-                                        Show
-                                      </>
-                                    ) : (
-                                      <>
-                                        <EyeOff className="w-4 h-4 mr-2" />
-                                        Hide
-                                      </>
-                                    )}
-                                  </Button>
-                                  <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                      <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
-                                        <Trash2 className="w-4 h-4 mr-2" />
-                                        Delete
-                                      </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                          This will permanently delete this wish. This action cannot be undone.
-                                        </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction
-                                          onClick={() => wish._id && handleDeleteWish(wish._id)}
-                                          className="bg-red-600 hover:bg-red-700"
-                                        >
-                                          Delete
-                                        </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
-                                </div>
+                                <div className="text-xs sm:text-sm text-[#2c3e1a]/70">{formatDate(wish.createdAt)}</div>
                               </div>
                             </div>
-                            <p className="text-[#2c3e1a] mt-2">{wish.message}</p>
+                            
+                            <p className="text-sm sm:text-base text-[#2c3e1a] break-words">{wish.message}</p>
+                            
+                            <div className="flex items-center gap-2 pt-2 border-t">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleToggleWishVisibility(wish._id!, wish.isHidden || false)}
+                                className="flex-1 text-xs sm:text-sm text-[#2c5e1a] hover:text-[#87b577]"
+                              >
+                                {wish.isHidden ? (
+                                  <>
+                                    <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                    Show
+                                  </>
+                                ) : (
+                                  <>
+                                    <EyeOff className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                    Hide
+                                  </>
+                                )}
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="outline" size="sm" className="flex-1 text-xs sm:text-sm text-red-600 hover:text-red-700">
+                                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                    Delete
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This will permanently delete this wish. This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => wish._id && handleDeleteWish(wish._id)}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
@@ -1085,7 +1323,7 @@ export default function AdminPage() {
                       className="text-[#0088cc] hover:bg-[#0088cc]/10 border-[#0088cc]/30"
                       title="Share via Telegram"
                     >
-                      <MessageCircle className="w-4 h-4 mr-2" />
+                      <Send className="w-4 h-4 mr-1" />
                       Telegram
                     </Button>
                     <Button
@@ -1095,7 +1333,8 @@ export default function AdminPage() {
                       className="text-[#0084ff] hover:bg-[#0084ff]/10 border-[#0084ff]/30"
                       title="Share via Facebook Messenger"
                     >
-                      <Send className="w-4 h-4 mr-2" />
+                      
+                      <MessageCircle className="w-4 h-4 mr-1" />
                       Messenger
                     </Button>
                     <Button

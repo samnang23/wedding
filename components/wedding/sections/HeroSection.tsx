@@ -104,7 +104,7 @@ export const HeroSection = ({ days, hours, minutes, seconds, showScrollIndicator
         </div>
 
         {/* Action Buttons */}
-        <div
+        {/* <div
           className="flex flex-raw justify-center gap-2 w-80"
           data-aos="fade-up"
           data-aos-delay="600">
@@ -122,7 +122,7 @@ export const HeroSection = ({ days, hours, minutes, seconds, showScrollIndicator
             <Heart className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
             ផ្ញើពាក្យជូនពរ
           </Button>
-        </div>
+        </div> */}
 
         {/* Scroll Indicator */}
         {showScrollIndicator && (

@@ -11,6 +11,8 @@ const serializeGuest = (guest: any): Guest => ({
   shortId: guest.shortId,
   name: guest.name,
   invitationUrl: guest.invitationUrl,
+  isSent: guest.isSent || false,
+  sentAt: guest.sentAt,
   createdAt: guest.createdAt,
   updatedAt: guest.updatedAt,
 })
@@ -141,6 +143,80 @@ export async function PUT(
     console.error('Error updating guest:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to update guest' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    // Verify admin authentication
+    const isAdmin = await verifyAdmin()
+    if (!isAdmin) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const { id } = await params
+    const body = await request.json()
+    const { isSent } = body
+
+    if (!ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid guest ID' },
+        { status: 400 }
+      )
+    }
+
+    if (typeof isSent !== 'boolean') {
+      return NextResponse.json(
+        { success: false, error: 'isSent must be a boolean' },
+        { status: 400 }
+      )
+    }
+
+    const db = await getDb()
+    
+    const updateData: any = {
+      $set: {
+        isSent,
+        updatedAt: new Date(),
+      }
+    }
+    
+    // Set sentAt when marking as sent, clear when unmarking
+    if (isSent) {
+      updateData.$set.sentAt = new Date()
+    } else {
+      updateData.$unset = { sentAt: '' }
+    }
+
+    const result = await db.collection('guests').updateOne(
+      { _id: new ObjectId(id) },
+      updateData
+    )
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Guest not found' },
+        { status: 404 }
+      )
+    }
+
+    const updatedGuest = await db.collection('guests').findOne({
+      _id: new ObjectId(id),
+    })
+
+    return NextResponse.json({ success: true, data: serializeGuest(updatedGuest!) })
+  } catch (error) {
+    console.error('Error updating guest sent status:', error)
+    return NextResponse.json(
+      { success: false, error: 'Failed to update guest sent status' },
       { status: 500 }
     )
   }
