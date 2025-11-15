@@ -5,7 +5,16 @@ import { ThemeProvider } from "@/components/theme-provider"
 
 export const metadata = {
   title: "Samnag ♥️ Rosa",
-  description: "A beautiful digital wedding invitation in Khmer tradition with a forest theme",
+    openGraph: {
+      images: [
+        {
+          url: '/images/pre-wedding/IMG_6050-min.JPG',
+          width: 1200,
+          height: 630,
+          alt: 'Samnag ♥️ Rosa',
+        },
+      ],
+    },
     generator: 'v0.dev'
 }
 

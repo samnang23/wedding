@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Table,
   TableBody,
@@ -50,6 +51,9 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
+  Share2,
+  MessageCircle,
+  Send,
 } from "lucide-react"
 import {
   Pagination,
@@ -58,6 +62,7 @@ import {
   PaginationItem,
 } from "@/components/ui/pagination"
 import type { Guest, WishData } from "@/types/wedding"
+import { encode } from "punycode"
 
 export default function AdminPage() {
   const router = useRouter()
@@ -72,6 +77,11 @@ export default function AdminPage() {
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null)
   const [authenticated, setAuthenticated] = useState<boolean | null>(null)
   const [username, setUsername] = useState<string | null>(null)
+  const [shareDialogOpen, setShareDialogOpen] = useState(false)
+  const [selectedGuestForShare, setSelectedGuestForShare] = useState<Guest | null>(null)
+  const [copiedTemplate, setCopiedTemplate] = useState(false)
+  const [invitationTemplate, setInvitationTemplate] = useState<string>("")
+  const [isEditingTemplate, setIsEditingTemplate] = useState(false)
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
@@ -365,6 +375,149 @@ export default function AdminPage() {
     }
   }
 
+  // Load template from database
+  const fetchTemplate = async () => {
+    try {
+      const response = await fetch('/api/template')
+      const data = await response.json()
+      if (data.success && data.data) {
+        setInvitationTemplate(data.data.template)
+      }
+    } catch (error) {
+      console.error('Error fetching template:', error)
+      toast.error('Failed to load template')
+    }
+  }
+
+  useEffect(() => {
+    if (authenticated) {
+      fetchTemplate()
+    }
+  }, [authenticated])
+
+  // Generate invitation template text
+  const generateInvitationTemplate = (guest: Guest): string => {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+      (typeof window !== 'undefined' ? window.location.origin : 'https://your-wedding-site.com')
+    const invitationUrl = guest.invitationUrl || `${baseUrl}/invitation/${guest.shortId}`
+    
+    if (!invitationTemplate) {
+      return 'Template not loaded. Please refresh the page.'
+    }
+    
+    return invitationTemplate
+      .replace(/\{\{GUEST_NAME\}\}/g, guest.name)
+      .replace(/\{\{INVITATION_URL\}\}/g, invitationUrl)
+  }
+
+  // Open share dialog
+  const handleShareInvitation = (guest: Guest) => {
+    setSelectedGuestForShare(guest)
+    setShareDialogOpen(true)
+    setCopiedTemplate(false)
+    setIsEditingTemplate(false)
+  }
+
+  // Save template to database
+  const handleSaveTemplate = async () => {
+    try {
+      const response = await fetch('/api/template', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ template: invitationTemplate }),
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        setIsEditingTemplate(false)
+        toast.success("Template saved successfully!")
+      } else {
+        toast.error(data.error || "Failed to save template")
+      }
+    } catch (error) {
+      console.error('Error saving template:', error)
+      toast.error("Failed to save template")
+    }
+  }
+
+  // Reset template to default
+  const handleResetTemplate = async () => {
+    try {
+      // Fetch default template from API (which will return the default if none exists)
+      const getResponse = await fetch('/api/template')
+      const getData = await getResponse.json()
+      
+      if (getData.success && getData.data) {
+        // Delete the current template to reset to default
+        const deleteResponse = await fetch('/api/template', {
+          method: 'DELETE',
+        })
+        
+        const deleteData = await deleteResponse.json()
+        if (deleteData.success) {
+          // Reload template (will get default from API)
+          await fetchTemplate()
+          toast.success("Template reset to default")
+        } else {
+          toast.error(deleteData.error || "Failed to reset template")
+        }
+      } else {
+        toast.error("Failed to load default template")
+      }
+    } catch (error) {
+      console.error('Error resetting template:', error)
+      toast.error("Failed to reset template")
+    }
+  }
+
+  // Copy invitation template
+  const handleCopyTemplate = async () => {
+    if (!selectedGuestForShare) return
+    
+    try {
+      const template = generateInvitationTemplate(selectedGuestForShare)
+      await navigator.clipboard.writeText(template)
+      setCopiedTemplate(true)
+      toast.success("Invitation template copied to clipboard!")
+      setTimeout(() => setCopiedTemplate(false), 2000)
+    } catch (error) {
+      console.error("Error copying template:", error)
+      toast.error("Failed to copy template")
+    }
+  }
+
+  // share to telegram
+  const shareToTelegram = () => {
+    if (!selectedGuestForShare) return
+    
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+    const encodedText = encodeURIComponent(generateInvitationTemplate(selectedGuestForShare));
+  
+    const tgUrl = `https://t.me/share/url?url=${baseUrl}&url=${encodedText}`;
+  
+    window.open(tgUrl, "_blank");
+  };
+
+  // Share to Facebook Messenger
+  const handleShareMessenger = () => {
+    if (!selectedGuestForShare) return
+    
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+      (typeof window !== 'undefined' ? window.location.origin : 'https://your-wedding-site.com')
+    const invitationUrl = selectedGuestForShare.invitationUrl || `${baseUrl}/invitation/${selectedGuestForShare.shortId}`
+    
+    // Get the full invitation template text
+    const shareText = generateInvitationTemplate(selectedGuestForShare)
+    
+    // Messenger share - include both URL and text
+    // Note: Messenger might not support text parameter, so we'll use URL and let user add text manually
+    // Or we can try using the Facebook share dialog with quote parameter
+    const messengerUrl = `https://www.facebook.com/dialog/send?link=${encodeURIComponent(invitationUrl)}&quote=${encodeURIComponent(shareText)}&redirect_uri=${encodeURIComponent(window.location.origin)}`
+    window.open(messengerUrl, "_blank", "noopener,noreferrer")
+  }
+
   // Reset form
   const resetForm = () => {
     setGuestName("")
@@ -562,12 +715,22 @@ export default function AdminPage() {
                                   size="sm"
                                   onClick={() => handleCopyUrl(guest.invitationUrl || "")}
                                   className="h-8 w-8 p-0"
+                                  title="Copy URL"
                                 >
                                   {copiedUrl === guest.invitationUrl ? (
                                     <Check className="w-4 h-4 text-green-600" />
                                   ) : (
                                     <Copy className="w-4 h-4" />
                                   )}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleShareInvitation(guest)}
+                                  className="h-8 w-8 p-0"
+                                  title="Share invitation template"
+                                >
+                                  <Share2 className="w-4 h-4 text-[#87b577]" />
                                 </Button>
                               </div>
                             </TableCell>
@@ -885,6 +1048,150 @@ export default function AdminPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Share Invitation Template Dialog */}
+      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Share Invitation Template</DialogTitle>
+            <DialogDescription>
+              {isEditingTemplate 
+                ? "Edit the invitation template. Use {{GUEST_NAME}} and {{INVITATION_URL}} as placeholders."
+                : `Copy the invitation message template to share with ${selectedGuestForShare?.name}`
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {!isEditingTemplate ? (
+              <>
+                <div className="space-y-2">
+                  <Label>Invitation Template (Preview)</Label>
+                  <Textarea
+                    readOnly
+                    value={selectedGuestForShare ? generateInvitationTemplate(selectedGuestForShare) : ""}
+                    className="min-h-[200px] font-mono text-sm bg-gray-50 whitespace-pre-wrap"
+                  />
+                </div>
+                <div className="flex items-center justify-between p-3 bg-[#87b577]/10 rounded-lg border border-[#87b577]/20">
+                  <div className="text-sm text-[#2c3e1a]/70">
+                    <p className="font-semibold">Guest: {selectedGuestForShare?.name}</p>
+                    <p className="text-xs mt-1 break-all">Link: {selectedGuestForShare?.invitationUrl}</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={shareToTelegram}
+                      className="text-[#0088cc] hover:bg-[#0088cc]/10 border-[#0088cc]/30"
+                      title="Share via Telegram"
+                    >
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      Telegram
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleShareMessenger}
+                      className="text-[#0084ff] hover:bg-[#0084ff]/10 border-[#0084ff]/30"
+                      title="Share via Facebook Messenger"
+                    >
+                      <Send className="w-4 h-4 mr-2" />
+                      Messenger
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsEditingTemplate(true)}
+                      className="text-[#2c5e1a] hover:bg-[#87b577]/10"
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit Template
+                    </Button>
+                    <Button
+                      onClick={handleCopyTemplate}
+                      className="bg-[#2c5e1a] hover:bg-[#4a7c2e] text-white"
+                    >
+                      {copiedTemplate ? (
+                        <>
+                          <Check className="w-4 h-4 mr-2" />
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4 mr-2" />
+                          Copy Template
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Edit Template</Label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleResetTemplate}
+                      className="text-xs text-[#2c3e1a]/70 hover:text-[#2c5e1a]"
+                    >
+                      Reset to Default
+                    </Button>
+                  </div>
+                  <Textarea
+                    value={invitationTemplate}
+                    onChange={(e) => setInvitationTemplate(e.target.value)}
+                    className="min-h-[250px] font-mono text-sm whitespace-pre-wrap"
+                    placeholder="Use {{GUEST_NAME}} for guest name and {{INVITATION_URL}} for invitation link"
+                  />
+                  <p className="text-xs text-[#2c3e1a]/60">
+                    Placeholders: <code className="bg-gray-100 px-1 rounded">{"{{GUEST_NAME}}"}</code> will be replaced with guest name, <code className="bg-gray-100 px-1 rounded">{"{{INVITATION_URL}}"}</code> will be replaced with invitation link
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Preview</Label>
+                  <Textarea
+                    readOnly
+                    value={selectedGuestForShare ? generateInvitationTemplate(selectedGuestForShare) : ""}
+                    className="min-h-[150px] font-mono text-sm bg-gray-50 whitespace-pre-wrap"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+          <DialogFooter>
+            {isEditingTemplate ? (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    setIsEditingTemplate(false)
+                    // Reload template from database
+                    await fetchTemplate()
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSaveTemplate}
+                  className="bg-[#2c5e1a] hover:bg-[#4a7c2e] text-white"
+                >
+                  Save Template
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={() => setShareDialogOpen(false)}
+              >
+                Close
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
