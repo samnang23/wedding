@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Table,
   TableBody,
@@ -44,12 +44,23 @@ import {
   Check,
   Users,
   Heart,
-  ExternalLink,
   RefreshCw,
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  EyeOff,
 } from "lucide-react"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+} from "@/components/ui/pagination"
 import type { Guest, WishData } from "@/types/wedding"
 
 export default function AdminPage() {
+  const router = useRouter()
   const [guests, setGuests] = useState<Guest[]>([])
   const [wishes, setWishes] = useState<WishData[]>([])
   const [loading, setLoading] = useState(true)
@@ -59,14 +70,50 @@ export default function AdminPage() {
   const [editingGuest, setEditingGuest] = useState<Guest | null>(null)
   const [guestName, setGuestName] = useState("")
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null)
+  const [authenticated, setAuthenticated] = useState<boolean | null>(null)
+  const [username, setUsername] = useState<string | null>(null)
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalGuests, setTotalGuests] = useState(0)
+  const [pageSize] = useState(10) // Items per page
+  
+  // Bulk selection for wishes
+  const [selectedWishes, setSelectedWishes] = useState<Set<string>>(new Set())
 
-  // Fetch guests
-  const fetchGuests = async () => {
+  // Check authentication
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch("/api/auth/session")
+        const data = await response.json()
+        if (data.authenticated) {
+          setAuthenticated(true)
+          setUsername(data.username)
+        } else {
+          setAuthenticated(false)
+          router.push("/admin/login")
+        }
+      } catch (error) {
+        console.error("Auth check error:", error)
+        setAuthenticated(false)
+        router.push("/admin/login")
+      }
+    }
+    checkAuth()
+  }, [router])
+
+  // Fetch guests with pagination
+  const fetchGuests = async (page: number = currentPage) => {
+    setLoading(true)
     try {
-      const response = await fetch("/api/guests")
+      const skip = (page - 1) * pageSize
+      const response = await fetch(`/api/guests?limit=${pageSize}&skip=${skip}`)
       const data = await response.json()
       if (data.success) {
         setGuests(data.data)
+        setTotalGuests(data.total || 0)
+        setCurrentPage(page)
       } else {
         toast.error("Failed to fetch guests")
       }
@@ -96,10 +143,138 @@ export default function AdminPage() {
     }
   }
 
+  // Delete wish
+  const handleDeleteWish = async (id: string) => {
+    try {
+      const response = await fetch(`/api/wishes/${id}`, {
+        method: "DELETE",
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        toast.success("Wish deleted successfully")
+        fetchWishes()
+      } else {
+        toast.error(data.error || "Failed to delete wish")
+      }
+    } catch (error) {
+      console.error("Error deleting wish:", error)
+      toast.error("Failed to delete wish")
+    }
+  }
+
+  // Toggle wish visibility (hide/show)
+  const handleToggleWishVisibility = async (id: string, currentHidden: boolean) => {
+    try {
+      const response = await fetch(`/api/wishes/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isHidden: !currentHidden }),
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        toast.success(currentHidden ? "Wish is now visible" : "Wish is now hidden")
+        fetchWishes()
+      } else {
+        toast.error(data.error || "Failed to update wish")
+      }
+    } catch (error) {
+      console.error("Error updating wish:", error)
+      toast.error("Failed to update wish")
+    }
+  }
+
+  // Bulk actions
+  const handleSelectAllWishes = () => {
+    if (selectedWishes.size === wishes.length) {
+      setSelectedWishes(new Set())
+    } else {
+      setSelectedWishes(new Set(wishes.map(w => w._id!).filter(Boolean)))
+    }
+  }
+
+  const handleToggleWishSelection = (id: string) => {
+    const newSelected = new Set(selectedWishes)
+    if (newSelected.has(id)) {
+      newSelected.delete(id)
+    } else {
+      newSelected.add(id)
+    }
+    setSelectedWishes(newSelected)
+  }
+
+  const handleBulkDelete = async () => {
+    if (selectedWishes.size === 0) return
+
+    try {
+      const response = await fetch("/api/wishes/bulk", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedWishes) }),
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        toast.success(`${selectedWishes.size} wish(es) deleted successfully`)
+        setSelectedWishes(new Set())
+        fetchWishes()
+      } else {
+        toast.error(data.error || "Failed to delete wishes")
+      }
+    } catch (error) {
+      console.error("Error deleting wishes:", error)
+      toast.error("Failed to delete wishes")
+    }
+  }
+
+  const handleBulkToggleVisibility = async (hide: boolean) => {
+    if (selectedWishes.size === 0) return
+
+    try {
+      const response = await fetch("/api/wishes/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedWishes), isHidden: hide }),
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        toast.success(`${selectedWishes.size} wish(es) ${hide ? 'hidden' : 'shown'} successfully`)
+        setSelectedWishes(new Set())
+        fetchWishes()
+      } else {
+        toast.error(data.error || "Failed to update wishes")
+      }
+    } catch (error) {
+      console.error("Error updating wishes:", error)
+      toast.error("Failed to update wishes")
+    }
+  }
+
   useEffect(() => {
-    fetchGuests()
-    fetchWishes()
-  }, [])
+    if (authenticated) {
+      fetchGuests(1)
+      fetchWishes()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authenticated])
+
+  // Logout
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("/api/auth/logout", { method: "POST" })
+      const data = await response.json()
+      if (data.success) {
+        toast.success("Logged out successfully")
+        router.push("/admin/login")
+        router.refresh()
+      }
+    } catch (error) {
+      console.error("Logout error:", error)
+      toast.error("Failed to logout")
+    }
+  }
 
   // Create or update guest
   const handleGuestSubmit = async (e: React.FormEvent) => {
@@ -122,7 +297,7 @@ export default function AdminPage() {
         const data = await response.json()
         if (data.success) {
           toast.success("Guest updated successfully")
-          fetchGuests()
+          fetchGuests(currentPage)
           resetForm()
         } else {
           toast.error(data.error || "Failed to update guest")
@@ -138,7 +313,8 @@ export default function AdminPage() {
         const data = await response.json()
         if (data.success) {
           toast.success("Guest created successfully")
-          fetchGuests()
+          // Go to first page to see the new guest
+          fetchGuests(1)
           resetForm()
         } else {
           toast.error(data.error || "Failed to create guest")
@@ -160,7 +336,13 @@ export default function AdminPage() {
       const data = await response.json()
       if (data.success) {
         toast.success("Guest deleted successfully")
-        fetchGuests()
+        // If current page becomes empty, go to previous page
+        const remainingOnPage = guests.length - 1
+        if (remainingOnPage === 0 && currentPage > 1) {
+          fetchGuests(currentPage - 1)
+        } else {
+          fetchGuests(currentPage)
+        }
       } else {
         toast.error(data.error || "Failed to delete guest")
       }
@@ -212,6 +394,23 @@ export default function AdminPage() {
     }).format(d)
   }
 
+  // Show loading while checking auth
+  if (authenticated === null) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#f8faf6] to-[#e8f5e3] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-[#2c5e1a] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-[#2c5e1a]">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Don't render if not authenticated (will redirect)
+  if (!authenticated) {
+    return null
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f8faf6] to-[#e8f5e3] p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -219,61 +418,74 @@ export default function AdminPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-[#2c5e1a] mb-2">Wedding Admin</h1>
-            <p className="text-[#2c3e1a]/70">Manage guests and view wishes</p>
+            <p className="text-[#2c3e1a]/70">
+              Manage guests and view wishes
+              {username && <span className="ml-2 text-sm">• Logged in as {username}</span>}
+            </p>
           </div>
-          <Dialog open={isGuestDialogOpen} onOpenChange={setIsGuestDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                onClick={() => {
-                  resetForm()
-                  setIsGuestDialogOpen(true)
-                }}
-                className="bg-[#2c5e1a] hover:bg-[#4a7c2e] text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Guest
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{isEditMode ? "Edit Guest" : "Add New Guest"}</DialogTitle>
-                <DialogDescription>
-                  {isEditMode
-                    ? "Update the guest information below."
-                    : "Enter the name of the distinguished guest to generate an invitation URL."}
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleGuestSubmit}>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Guest Name</Label>
-                    <Input
-                      id="name"
-                      value={guestName}
-                      onChange={(e) => setGuestName(e.target.value)}
-                      placeholder="Enter guest name"
-                      required
-                    />
+          <div className="flex items-center gap-2">
+            <Dialog open={isGuestDialogOpen} onOpenChange={setIsGuestDialogOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  onClick={() => {
+                    resetForm()
+                    setIsGuestDialogOpen(true)
+                  }}
+                  className="bg-[#2c5e1a] hover:bg-[#4a7c2e] text-white"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Guest
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{isEditMode ? "Edit Guest" : "Add New Guest"}</DialogTitle>
+                  <DialogDescription>
+                    {isEditMode
+                      ? "Update the guest information below."
+                      : "Enter the name of the distinguished guest to generate an invitation URL."}
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleGuestSubmit}>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Guest Name</Label>
+                      <Input
+                        id="name"
+                        value={guestName}
+                        onChange={(e) => setGuestName(e.target.value)}
+                        placeholder="Enter guest name"
+                        required
+                      />
+                    </div>
                   </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      resetForm()
-                      setIsGuestDialogOpen(false)
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" className="bg-[#2c5e1a] hover:bg-[#4a7c2e]">
-                    {isEditMode ? "Update" : "Create"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        resetForm()
+                        setIsGuestDialogOpen(false)
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" className="bg-[#2c5e1a] hover:bg-[#4a7c2e]">
+                      {isEditMode ? "Update" : "Create"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+            <Button
+              variant="outline"
+              onClick={handleLogout}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -281,7 +493,7 @@ export default function AdminPage() {
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="guests" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
-              Guests ({guests.length})
+              Guests ({totalGuests})
             </TabsTrigger>
             <TabsTrigger value="wishes" className="flex items-center gap-2">
               <Heart className="w-4 h-4" />
@@ -303,7 +515,7 @@ export default function AdminPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={fetchGuests}
+                    onClick={() => fetchGuests(currentPage)}
                     disabled={loading}
                   >
                     <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
@@ -404,6 +616,79 @@ export default function AdminPage() {
                     </Table>
                   </div>
                 )}
+                
+                {/* Pagination */}
+                {!loading && totalGuests > 0 && (
+                  <div className="mt-4 flex items-center justify-between">
+                    <div className="text-sm text-[#2c3e1a]/70">
+                      Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalGuests)} of {totalGuests} guests
+                    </div>
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => currentPage > 1 && fetchGuests(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="gap-1"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                            <span>Previous</span>
+                          </Button>
+                        </PaginationItem>
+                        
+                        {/* Page numbers */}
+                        {Array.from({ length: Math.ceil(totalGuests / pageSize) }, (_, i) => i + 1)
+                          .filter((page) => {
+                            // Show first page, last page, current page, and pages around current
+                            return (
+                              page === 1 ||
+                              page === Math.ceil(totalGuests / pageSize) ||
+                              (page >= currentPage - 1 && page <= currentPage + 1)
+                            )
+                          })
+                          .map((page, index, array) => {
+                            // Add ellipsis if there's a gap
+                            const showEllipsisBefore = index > 0 && page - array[index - 1] > 1
+                            
+                            return (
+                              <React.Fragment key={page}>
+                                {showEllipsisBefore && (
+                                  <PaginationItem>
+                                    <PaginationEllipsis />
+                                  </PaginationItem>
+                                )}
+                                <PaginationItem>
+                                  <Button
+                                    variant={currentPage === page ? "outline" : "ghost"}
+                                    size="sm"
+                                    onClick={() => fetchGuests(page)}
+                                    className="min-w-[2.5rem]"
+                                  >
+                                    {page}
+                                  </Button>
+                                </PaginationItem>
+                              </React.Fragment>
+                            )
+                          })}
+                        
+                        <PaginationItem>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => currentPage < Math.ceil(totalGuests / pageSize) && fetchGuests(currentPage + 1)}
+                            disabled={currentPage >= Math.ceil(totalGuests / pageSize)}
+                            className="gap-1"
+                          >
+                            <span>Next</span>
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -441,25 +726,151 @@ export default function AdminPage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
+                    {/* Bulk Actions Bar */}
+                    <div className="flex items-center justify-between p-3 bg-[#87b577]/10 rounded-lg border border-[#87b577]/20">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedWishes.size === wishes.length && wishes.length > 0}
+                          onChange={handleSelectAllWishes}
+                          className="w-4 h-4 text-[#2c5e1a] border-[#87b577] rounded focus:ring-[#87b577]"
+                        />
+                        <span className="text-sm text-[#2c3e1a]/70">
+                          {selectedWishes.size > 0 ? `${selectedWishes.size} selected` : "Select all"}
+                        </span>
+                      </div>
+                      {selectedWishes.size > 0 && (
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleBulkToggleVisibility(true)}
+                            className="text-[#2c5e1a] hover:text-[#87b577]"
+                          >
+                            <EyeOff className="w-4 h-4 mr-2" />
+                            Hide Selected
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleBulkToggleVisibility(false)}
+                            className="text-[#2c5e1a] hover:text-[#87b577]"
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            Show Selected
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete Selected
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will permanently delete {selectedWishes.size} wish(es). This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={handleBulkDelete}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Wishes List */}
                     {wishes.map((wish) => (
-                      <Card key={wish._id} className="border-[#87b577]/30">
+                      <Card 
+                        key={wish._id} 
+                        className={`border-[#87b577]/30 ${wish.isHidden ? 'opacity-60 bg-gray-50' : ''} ${selectedWishes.has(wish._id!) ? 'ring-2 ring-[#87b577]' : ''}`}
+                      >
                         <CardContent className="pt-6">
                           <div className="space-y-2">
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <p className="font-semibold text-[#2c5e1a]">{wish.name}</p>
-                                {wish.guestName && (
-                                  <p className="text-sm text-[#2c3e1a]/70 mt-1">
-                                    From: {wish.guestName}
-                                  </p>
-                                )}
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex items-start gap-3 flex-1 min-w-0">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedWishes.has(wish._id!)}
+                                  onChange={() => wish._id && handleToggleWishSelection(wish._id)}
+                                  className="w-4 h-4 mt-1 text-[#2c5e1a] border-[#87b577] rounded focus:ring-[#87b577] flex-shrink-0"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <p className="font-semibold text-[#2c5e1a]">{wish.name}</p>
+                                    {wish.isHidden && (
+                                      <span className="text-xs px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full">
+                                        Hidden
+                                      </span>
+                                    )}
+                                  </div>
+                                  {wish.guestName && wish.guestName !== wish.name && (
+                                    <p className="text-sm text-[#2c3e1a]/70 mt-1">
+                                      From: {wish.guestName}
+                                    </p>
+                                  )}
+                                </div>
                               </div>
-                              <div className="flex items-center gap-4 text-sm text-[#2c3e1a]/70">
-                                <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-4 flex-shrink-0">
+                                <div className="flex items-center gap-1 text-sm text-[#2c3e1a]/70">
                                   <Users className="w-4 h-4" />
                                   {wish.guests}
                                 </div>
-                                <div>{formatDate(wish.createdAt)}</div>
+                                <div className="text-sm text-[#2c3e1a]/70">{formatDate(wish.createdAt)}</div>
+                                <div className="flex items-center gap-2 ml-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleToggleWishVisibility(wish._id!, wish.isHidden || false)}
+                                    className="text-[#2c5e1a] hover:text-[#87b577]"
+                                  >
+                                    {wish.isHidden ? (
+                                      <>
+                                        <Eye className="w-4 h-4 mr-2" />
+                                        Show
+                                      </>
+                                    ) : (
+                                      <>
+                                        <EyeOff className="w-4 h-4 mr-2" />
+                                        Hide
+                                      </>
+                                    )}
+                                  </Button>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        Delete
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          This will permanently delete this wish. This action cannot be undone.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => wish._id && handleDeleteWish(wish._id)}
+                                          className="bg-red-600 hover:bg-red-700"
+                                        >
+                                          Delete
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </div>
                               </div>
                             </div>
                             <p className="text-[#2c3e1a] mt-2">{wish.message}</p>
@@ -477,4 +888,3 @@ export default function AdminPage() {
     </div>
   )
 }
-

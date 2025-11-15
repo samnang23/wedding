@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/mongodb'
 import type { Guest } from '@/types/wedding'
 import { generateShortId } from '@/lib/short-id'
+import { verifyAdmin } from '@/lib/auth'
 
 // Helper to serialize MongoDB documents
 const serializeGuest = (guest: any): Guest => ({
@@ -13,12 +14,39 @@ const serializeGuest = (guest: any): Guest => ({
   updatedAt: guest.updatedAt,
 })
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Verify admin authentication
+    const isAdmin = await verifyAdmin()
+    if (!isAdmin) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const searchParams = request.nextUrl.searchParams
+    const limit = parseInt(searchParams.get('limit') || '10')
+    const skip = parseInt(searchParams.get('skip') || '0')
+
     const db = await getDb()
-    const guests = await db.collection<Guest>('guests').find({}).sort({ createdAt: -1 }).toArray()
+    const guests = await db
+      .collection<Guest>('guests')
+      .find({})
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .skip(skip)
+      .toArray()
+
+    const total = await db.collection<Guest>('guests').countDocuments()
     
-    return NextResponse.json({ success: true, data: guests.map(serializeGuest) })
+    return NextResponse.json({ 
+      success: true, 
+      data: guests.map(serializeGuest),
+      total,
+      limit,
+      skip,
+    })
   } catch (error: any) {
     console.error('Error fetching guests:', error)
     const errorMessage = error?.message || 'Failed to fetch guests'
@@ -31,6 +59,15 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify admin authentication
+    const isAdmin = await verifyAdmin()
+    if (!isAdmin) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json()
     const { name } = body
 

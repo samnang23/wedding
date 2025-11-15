@@ -8,6 +8,7 @@ export default function InvitationPage() {
   const params = useParams()
   const router = useRouter()
   const [guestName, setGuestName] = useState<string | null>(null)
+  const [guestShortId, setGuestShortId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -26,6 +27,7 @@ export default function InvitationPage() {
 
         if (data.success && data.data) {
           setGuestName(data.data.name)
+          setGuestShortId(data.data.shortId)
         } else {
           setError(data.error || "Invitation not found")
         }
@@ -68,8 +70,12 @@ export default function InvitationPage() {
     )
   }
 
-  // Pass guest name to WeddingContent via URL search params
-  // WeddingContent will read it from the URL
-  return <WeddingContent guestNameFromInvitation={guestName || undefined} />
+  // Pass guest name and shortId to WeddingContent
+  return (
+    <WeddingContent 
+      guestNameFromInvitation={guestName || undefined}
+      guestShortIdFromInvitation={guestShortId || undefined}
+    />
+  )
 }
 

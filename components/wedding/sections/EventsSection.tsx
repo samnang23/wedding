@@ -59,12 +59,11 @@ export const EventsSection = ({ weddingEvents }: EventsSectionProps) => {
               </div>
 
               {group.events.map((event) => (
-
-                <div className="max-w-lg mx-auto">
-                  <div className="flex flex-col items-center justify-center" key={event.id} data-aos="fade-up">
+                <div key={event.id} className="max-w-lg mx-auto">
+                  <div className="flex flex-col items-center justify-center" data-aos="fade-up">
                     <div className="w-[5px] h-[25px] bg-[#2c5e1a]/100 mx-auto rounded-full mt-2 mb-2"></div>
 
-                    <div className="flex flex-raw items-center  w-full" key={event.id} data-aos="fade-up">
+                    <div className="flex flex-raw items-center  w-full" data-aos="fade-up">
 
 
                       {typeof event.icon === "string" ? (

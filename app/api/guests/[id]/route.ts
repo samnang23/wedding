@@ -3,6 +3,7 @@ import { getDb } from '@/lib/mongodb'
 import { ObjectId } from 'mongodb'
 import type { Guest } from '@/types/wedding'
 import { generateShortId } from '@/lib/short-id'
+import { verifyAdmin } from '@/lib/auth'
 
 // Helper to serialize MongoDB documents
 const serializeGuest = (guest: any): Guest => ({
@@ -19,6 +20,15 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Verify admin authentication
+    const isAdmin = await verifyAdmin()
+    if (!isAdmin) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const { id } = await params
     
     if (!ObjectId.isValid(id)) {
@@ -55,6 +65,15 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Verify admin authentication
+    const isAdmin = await verifyAdmin()
+    if (!isAdmin) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const { id } = await params
     const body = await request.json()
     const { name } = body
@@ -132,6 +151,15 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Verify admin authentication
+    const isAdmin = await verifyAdmin()
+    if (!isAdmin) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const { id } = await params
 
     if (!ObjectId.isValid(id)) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/mongodb'
 import type { WishData } from '@/types/wedding'
+import { verifyAdmin } from '@/lib/auth'
 
 // Helper to serialize MongoDB documents
 const serializeWish = (wish: any): WishData => ({
@@ -9,16 +10,28 @@ const serializeWish = (wish: any): WishData => ({
   message: wish.message,
   guests: wish.guests,
   guestName: wish.guestName,
+  guestShortId: wish.guestShortId,
+  isHidden: wish.isHidden || false,
   createdAt: wish.createdAt,
 })
 
 export async function GET(request: NextRequest) {
   try {
+    // Verify admin authentication for GET requests (viewing wishes)
+    const isAdmin = await verifyAdmin()
+    if (!isAdmin) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const searchParams = request.nextUrl.searchParams
     const limit = parseInt(searchParams.get('limit') || '50')
     const skip = parseInt(searchParams.get('skip') || '0')
 
     const db = await getDb()
+    // Admin can see all wishes including hidden ones
     const wishes = await db
       .collection<WishData>('wishes')
       .find({})
@@ -49,7 +62,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, message, guests, guestName } = body
+    const { name, message, guests, guestName, guestShortId } = body
 
     if (!name || typeof name !== 'string' || name.trim() === '') {
       return NextResponse.json(
@@ -65,17 +78,36 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Validate that the guest exists (only allow wishes from valid invitation links)
+    if (!guestShortId) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid invitation. Please use a valid invitation link to submit wishes.' },
+        { status: 403 }
+      )
+    }
+
+    const db = await getDb()
+    
+    // Verify the guest exists in the database
+    const guest = await db.collection('guests').findOne({ shortId: guestShortId })
+    if (!guest) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid invitation. Guest not found.' },
+        { status: 403 }
+      )
+    }
+
     const guestsCount = parseInt(guests) || 1
 
     const wish: WishData = {
       name: name.trim(),
       message: message.trim(),
       guests: guestsCount,
-      guestName: guestName || undefined,
+      guestName: guestName || guest.name,
+      guestShortId: guestShortId,
       createdAt: new Date(),
     }
 
-    const db = await getDb()
     const result = await db.collection<WishData>('wishes').insertOne(wish)
 
     return NextResponse.json({

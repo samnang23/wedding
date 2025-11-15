@@ -6,7 +6,7 @@ import AOS from 'aos'
 import 'aos/dist/aos.css'
 import { Volume2, VolumeX, TreePine, Leaf, Heart, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { WeddingEvent, Photo, Wish } from "@/types/wedding"
+import type { WeddingEvent, Photo } from "@/types/wedding"
 
 // Import components
 import Invitation from "@/app/invitation"
@@ -25,16 +25,18 @@ import { Footer } from "@/components/wedding/sections/Footer"
 
 interface WeddingContentProps {
   guestNameFromInvitation?: string
+  guestShortIdFromInvitation?: string
 }
 
-export default function WeddingContent({ guestNameFromInvitation }: WeddingContentProps = {}) {
+export default function WeddingContent({ guestNameFromInvitation, guestShortIdFromInvitation }: WeddingContentProps = {}) {
   const searchParams = useSearchParams()
   const [showInvitation, setShowInvitation] = useState(true)
   const [guestName, setGuestName] = useState(guestNameFromInvitation || "ភ្ញៀវជាទីគោរព")
+  const [guestShortId, setGuestShortId] = useState<string | undefined>(guestShortIdFromInvitation)
   const [isLoaded, setIsLoaded] = useState(false)
   const [isBackgroundLoaded, setIsBackgroundLoaded] = useState(false)
   const [activeSection, setActiveSection] = useState<string | null>(null)
-  const [wishName, setWishName] = useState("")
+  const [wishName, setWishName] = useState(guestNameFromInvitation || "")
   const [wishMessage, setWishMessage] = useState("")
   const [wishGuests, setWishGuests] = useState("1")
   const [isWishSubmitted, setIsWishSubmitted] = useState(false)
@@ -57,15 +59,21 @@ export default function WeddingContent({ guestNameFromInvitation }: WeddingConte
     // If guest name was passed as prop (from invitation page), use it
     if (guestNameFromInvitation) {
       setGuestName(guestNameFromInvitation)
-      return
+      setWishName(guestNameFromInvitation) // Auto-fill wish form
     }
     
-    // Otherwise, check URL params for backward compatibility
-    const name = searchParams.get("name")
-    if (name) {
-      setGuestName(decodeURIComponent(name))
+    if (guestShortIdFromInvitation) {
+      setGuestShortId(guestShortIdFromInvitation)
     }
-  }, [searchParams, guestNameFromInvitation])
+    
+    // Otherwise, check URL params for backward compatibility (old format)
+    const name = searchParams.get("name")
+    if (name && !guestNameFromInvitation) {
+      const decodedName = decodeURIComponent(name)
+      setGuestName(decodedName)
+      setWishName(decodedName) // Auto-fill wish form
+    }
+  }, [searchParams, guestNameFromInvitation, guestShortIdFromInvitation])
 
   // Initialize audio
   useEffect(() => {
@@ -332,6 +340,12 @@ export default function WeddingContent({ guestNameFromInvitation }: WeddingConte
       return
     }
 
+    // Only allow wishes from valid invitation links
+    if (!guestShortId) {
+      alert("សូមប្រើតំណអញ្ជើញដែលត្រឹមត្រូវដើម្បីផ្ញើពាក្យជូនពរ។\nPlease use a valid invitation link to submit wishes.")
+      return
+    }
+
     try {
       const response = await fetch("/api/wishes", {
         method: "POST",
@@ -341,6 +355,7 @@ export default function WeddingContent({ guestNameFromInvitation }: WeddingConte
           message: wishMessage.trim(),
           guests: parseInt(wishGuests) || 1,
           guestName: guestName !== "ភ្ញៀវជាទីគោរព" ? guestName : undefined,
+          guestShortId: guestShortId, // Required for validation
         }),
       })
 
@@ -358,16 +373,18 @@ export default function WeddingContent({ guestNameFromInvitation }: WeddingConte
         }
 
         setTimeout(() => {
-          setWishName("")
+          // Keep the name filled for potential additional wishes
           setWishMessage("")
           setWishGuests("1")
           setIsWishSubmitted(false)
         }, 5000)
       } else {
         console.error("Failed to submit wish:", data.error)
+        alert(data.error || "Failed to submit wish. Please try again.")
       }
     } catch (error) {
       console.error("Error submitting wish:", error)
+      alert("An error occurred. Please try again.")
     }
   }
 
@@ -508,29 +525,6 @@ export default function WeddingContent({ guestNameFromInvitation }: WeddingConte
     { id: 35, src: "/images/pre-wedding/IMG_6144-min.JPG", alt: "Couple Photo 35" },
   ]
 
-  const sampleWishes: Wish[] = [
-    {
-      id: 1,
-      name: "វិចិត្រ",
-      message: "សូមជូនពរឲ្យអ្នកទាំងពីរមានសុភមង្គល និងសេចក្តីសុខគ្រប់ពេលវេលា។",
-      date: "១៦ មករា ២០២៦",
-      guests: 2,
-    },
-    {
-      id: 2,
-      name: "សុភា",
-      message: "សូមឱ្យអ្នកទាំងពីរមានសុភមង្គល និងសេចក្តីសុខគ្រប់ពេលវេលា។ ខ្ញុំនឹងចូលរួមក្នុងពិធីមង្គលការរបស់អ្នកទាំងពីរ។",
-      date: "១២ មករា ២០២៦",
-      guests: 4,
-    },
-    {
-      id: 3,
-      name: "រតនា",
-      message: "សូមជូនពរឲ្យអ្នកទាំងពីរមានសុភមង្គល និងសេចក្តីសុខគ្រប់ពេលវេលា។ សូមឱ្យអ្នកទាំងពីរមានកូនច្រើន។",
-      date: "១៥ មករា ២០២៦",
-      guests: 3,
-    },
-  ]
 
   // Handle opening invitation
   const handleOpenInvitation = () => {
@@ -691,7 +685,8 @@ export default function WeddingContent({ guestNameFromInvitation }: WeddingConte
             setWishGuests={setWishGuests}
             isWishSubmitted={isWishSubmitted}
             handleWishSubmit={handleWishSubmit}
-            sampleWishes={sampleWishes}
+            isNameAutoFilled={!!guestShortId}
+            guestShortId={guestShortId}
           />
 
           {/* Gift Registry Section */}

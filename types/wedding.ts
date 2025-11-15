@@ -39,6 +39,8 @@ export interface WishData {
   message: string
   guests: number
   guestName?: string // The name from the invitation URL
+  guestShortId?: string // The shortId of the guest who submitted (for validation)
+  isHidden?: boolean // Whether the wish is hidden from public view
   createdAt: Date
 }
 
