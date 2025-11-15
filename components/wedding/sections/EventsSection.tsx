@@ -95,9 +95,9 @@ export const EventsSection = ({ weddingEvents }: EventsSectionProps) => {
                           <h3 className="font-moul text-green-900 text-xl sm:text-2xl leading-snug">
                             {event.title}
                           </h3>
-                          <p className="font-kantumruy-pro text-green-900/80 text-xl sm:text-2xl font-semibold">
+                          {/* <p className="font-kantumruy-pro text-green-900/80 text-xl sm:text-2xl font-semibold">
                             {event.titleEn}
-                          </p>
+                          </p> */}
                         </div>
                       </div>
                     </div>
