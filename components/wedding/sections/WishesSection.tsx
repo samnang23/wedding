@@ -48,7 +48,7 @@ export const WishesSection = ({
         const limit = showAll ? 50 : 3 // Show 3 initially, 50 when "See More" is clicked
         const response = await fetch(`/api/wishes/public?limit=${limit}`)
         const data = await response.json()
-        
+
         if (data.success) {
           setWishes(data.data)
           setTotalWishes(data.total || 0)
@@ -62,6 +62,16 @@ export const WishesSection = ({
 
     fetchWishes()
   }, [showAll, isWishSubmitted]) // Refetch when wish is submitted
+
+  // Refresh AOS when wishes change
+  useEffect(() => {
+    // Dynamically import AOS to avoid SSR issues if needed, or assume it's global if loaded in layout
+    // But better to import it if we can.
+    // Since this component is "use client", we can import it.
+    import('aos').then((AOS) => {
+      AOS.refresh()
+    })
+  }, [wishes, loading])
 
   // Format date
   const formatDate = (date: Date | string | undefined) => {
@@ -122,8 +132,8 @@ export const WishesSection = ({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 max-w-5xl mx-auto">
           {/* Wish Form */}
           <div
-            data-aos="fade-right"
-            data-aos-duration="1200"
+            data-aos="fade-up"
+            data-aos-duration="1000"
           >
             <Card className="p-4 sm:p-6 border-[#87b577]/30 bg-white/70 backdrop-blur-sm transition-all duration-300 hover:bg-white/80 hover:shadow-xl">
               <h3 className="font-moul text-lg sm:text-xl mb-4 sm:mb-6 text-[#1a4810] flex items-center drop-shadow-sm hover:text-[#87b577] transition-colors">
@@ -205,10 +215,7 @@ export const WishesSection = ({
           </div>
 
           {/* Wishes List */}
-          <div
-            data-aos="fade-left"
-            data-aos-duration="1200"
-          >
+          <div className="w-full">
             <h3 className="font-moul text-xl mb-4 text-[#2c5e1a]">ពាក្យជូនពរពីភ្ញៀវ</h3>
             {loading ? (
               <div className="text-center py-8 text-[#2c3e1a]/50">
@@ -256,7 +263,7 @@ export const WishesSection = ({
                     </Card>
                   )
                 })}
-                
+
                 {/* See More Button */}
                 {hasMoreWishes && (
                   <div className="flex justify-center pt-4">

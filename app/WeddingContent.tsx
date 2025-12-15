@@ -55,17 +55,17 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
   // Set mobile state and get guest name from URL or prop
   useEffect(() => {
     setIsMobile(window.innerWidth < 768)
-    
+
     // If guest name was passed as prop (from invitation page), use it
     if (guestNameFromInvitation) {
       setGuestName(guestNameFromInvitation)
       setWishName(guestNameFromInvitation) // Auto-fill wish form
     }
-    
+
     if (guestShortIdFromInvitation) {
       setGuestShortId(guestShortIdFromInvitation)
     }
-    
+
     // Otherwise, check URL params for backward compatibility (old format)
     const name = searchParams.get("name")
     if (name && !guestNameFromInvitation) {
@@ -102,7 +102,7 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
   const handleVideoPlay = () => {
     const audio = audioRef.current
     if (!audio) return
-    
+
     // Pause the background music when video starts playing
     // Only if music is currently playing and not manually muted
     if (!audio.paused && !isMuted) {
@@ -113,7 +113,7 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
   const handleVideoPause = () => {
     const audio = audioRef.current
     if (!audio) return
-    
+
     // Resume music when video is paused (only if not manually muted)
     // Only resume if music was playing before (not manually muted)
     if (audio.paused && !isMuted && showInvitation === false) {
@@ -126,7 +126,7 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
   const handleVideoEnd = () => {
     const audio = audioRef.current
     if (!audio) return
-    
+
     // Resume music when video ends (only if not manually muted)
     // Only resume if music was playing before (not manually muted)
     if (audio.paused && !isMuted && showInvitation === false) {
@@ -171,15 +171,15 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
     const initializeApp = () => {
       const mobileCheck = window.innerWidth < 768
       AOS.init({
-        duration: mobileCheck ? 800 : 1000,
-        once: false,
-        mirror: true,
-        offset: mobileCheck ? 150 : 200,
+        duration: mobileCheck ? 700 : 1000,
+        once: mobileCheck ? true : false, // Mobile: animate once and stay
+        mirror: mobileCheck ? false : true, // Mobile: don't hide when scrolling past
+        offset: mobileCheck ? 0 : 200, // Mobile: trigger immediately when in view
         disable: false,
         useClassNames: false,
         initClassName: 'aos-init',
         animatedClassName: 'aos-animate',
-        disableMutationObserver: mobileCheck,
+        disableMutationObserver: false, // Enable observing for dynamic content even on mobile
         debounceDelay: mobileCheck ? 30 : 0,
         throttleDelay: mobileCheck ? 50 : 0,
       })
@@ -233,11 +233,12 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
           entries.forEach((entry) => {
             if (entry.isIntersecting && entry.target.id) {
               const animateOnce = entry.target.getAttribute('data-animate') === 'once'
-              if (animateOnce && !animatedElements.has(entry.target.id)) {
-                setAnimatedElements((prev) => new Set([...prev, entry.target.id]))
-              } else if (!animateOnce) {
-                setAnimatedElements((prev) => new Set([...prev, entry.target.id]))
-              }
+
+              setAnimatedElements((prev) => {
+                // If it's already animated, don't update state to avoid re-renders
+                if (prev.has(entry.target.id)) return prev
+                return new Set([...prev, entry.target.id])
+              })
             }
           })
         },
@@ -302,7 +303,7 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
 
   const handleWishSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!wishName.trim() || !wishMessage.trim()) {
       return
     }
@@ -327,7 +328,7 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
       })
 
       const data = await response.json()
-      
+
       if (data.success) {
         setIsWishSubmitted(true)
 
@@ -451,7 +452,7 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
       time: "៥:០០ ល្ថាច",
       icon: "/images/events-icon/cup.png",
     },
-    
+
   ]
 
   const photos: Photo[] = [
@@ -496,7 +497,7 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
   // Handle opening invitation
   const handleOpenInvitation = () => {
     setShowInvitation(false)
-    
+
     // Wait a tiny bit for audio element to be available, then play music
     setTimeout(() => {
       const audio = audioRef.current
@@ -504,7 +505,7 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
         // Set volume and ensure it's ready
         audio.volume = 0.3
         audio.loop = true
-        
+
         // Play immediately
         const playPromise = audio.play()
         if (playPromise !== undefined) {
@@ -532,7 +533,7 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
         console.error("Audio element not found")
       }
     }, 50)
-    
+
     // Force scroll to top when entering wedding content
     setTimeout(() => {
       window.scrollTo(0, 0)
@@ -676,12 +677,12 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
             showScrollIndicator={showScrollIndicator}
             scrollToSection={scrollToSection}
           />
-           {/* New Section */}
-           <NewSection scrollToSection={scrollToSection} />
+          {/* New Section */}
+          <NewSection scrollToSection={scrollToSection} />
 
           {/* Gallery Section */}
-          <GallerySection 
-            photos={photos} 
+          <GallerySection
+            photos={photos}
             isMobile={isMobile}
             videoUrl="/images/pre-wedding/IMG_0556.MOV"
             onVideoPlay={handleVideoPlay}
@@ -689,7 +690,7 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
             onVideoEnd={handleVideoEnd}
           />
 
-         
+
 
           {/* Events Timeline Section */}
           <EventsSection weddingEvents={weddingEvents} />
