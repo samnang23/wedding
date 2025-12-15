@@ -49,7 +49,7 @@ export const LocationSection = ({ animatedElements }: LocationSectionProps) => {
             <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 bg-gradient-to-t from-black/70 to-transparent">
               <div className="max-w-xl mx-auto text-center">
                 <h3 className="font-moul text-lg sm:text-xl mb-2 text-white drop-shadow-lg">គេហដ្ឋានខាងស្រី</h3>
-                <p className="font-moulpali mb-3 sm:mb-4 text-white/90 text-xs sm:text-sm">ភូមិព្រៃមាស , ឃុំត្នោត, ស្រុកពោធិ៍រៀង, ខេត្តព្រៃវែង</p>
+                <p className="font-moulpali mb-3 sm:mb-4 text-white/90 text-xs sm:text-sm">ភូមិព្រៃមាស , ឃុំកំពង់ឫស្សី, ស្រុកពោធិ៍រៀង, ខេត្តព្រៃវែង</p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-3 sm:mb-4">
                   <Button
                     onClick={openGoogleMaps}
