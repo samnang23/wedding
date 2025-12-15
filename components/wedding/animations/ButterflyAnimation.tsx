@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 
 interface Butterfly {
@@ -20,7 +20,13 @@ interface Butterfly {
 }
 
 export const ButterflyAnimation = () => {
-  const [butterflies, setButterflies] = useState<Butterfly[]>([])
+  // We only use state for the initial render of elements, not for their positions
+  const [butterflyElements, setButterflyElements] = useState<Butterfly[]>([])
+
+  // Refs to hold mutable state without triggering re-renders
+  const butterfliesRef = useRef<Butterfly[]>([])
+  const domRefs = useRef<(HTMLDivElement | null)[]>([])
+  const requestRef = useRef<number>()
 
   useEffect(() => {
     // Array of butterfly Lottie URLs
@@ -30,15 +36,16 @@ export const ButterflyAnimation = () => {
       "https://lottie.host/23faf74c-f8d6-41c9-b33b-7b32da954857/ASFfsY9qZW.lottie"
     ]
 
-    // Optimized butterfly count for mobile performance
-    const butterflyCount = typeof window !== 'undefined' && window.innerWidth < 768 ? 8 : 25
+    // Significantly reduce count for mobile to prevent crashes
+    const isMobile = window.innerWidth < 768
+    const butterflyCount = isMobile ? 4 : 15
 
     const randomTarget = () => ({
       x: Math.random() * window.innerWidth,
       y: Math.random() * window.innerHeight
     })
 
-    const newButterflies = Array.from({ length: butterflyCount }).map((_, index) => {
+    const initialButterflies = Array.from({ length: butterflyCount }).map((_, index) => {
       const size = 30 + Math.random() * 25
       const x = Math.random() * window.innerWidth
       const y = Math.random() * window.innerHeight
@@ -61,20 +68,16 @@ export const ButterflyAnimation = () => {
       }
     })
 
-    setButterflies(newButterflies)
-  }, [])
+    butterfliesRef.current = initialButterflies
+    setButterflyElements(initialButterflies)
 
-  // Animation loop with realistic movement and screen boundary handling
-  useEffect(() => {
-    let animationId: number
+    // Initialize dom refs array
+    domRefs.current = new Array(butterflyCount).fill(null)
+
     let lastTime = 0
-    const targetFPS = typeof window !== 'undefined' && window.innerWidth < 768 ? 20 : 30
+    // Lower FPS for mobile to save battery and CPU
+    const targetFPS = isMobile ? 24 : 30
     const frameInterval = 1000 / targetFPS
-
-    const randomTarget = () => ({
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight
-    })
 
     const isOffScreen = (x: number, y: number, margin = 100) => {
       return x < -margin || x > window.innerWidth + margin ||
@@ -83,151 +86,140 @@ export const ButterflyAnimation = () => {
 
     const animate = (currentTime: number) => {
       if (currentTime - lastTime >= frameInterval) {
-        setButterflies(prevButterflies =>
-          prevButterflies.map(b => {
-            // Handle spawn delay
-            if (b.spawnDelay > 0) {
-              return { ...b, spawnDelay: b.spawnDelay - frameInterval }
-            }
-
-            // Skip animation if not visible
-            if (!b.isVisible) {
-              return b
-            }
-
-            const dx = b.target.x - b.x
-            const dy = b.target.y - b.y
-            const dist = Math.sqrt(dx * dx + dy * dy)
-
-            let newTarget = b.target
-            let newX = b.x
-            let newY = b.y
-            let newIsVisible = b.isVisible
-
-            // Check if butterfly is off screen
-            if (isOffScreen(b.x, b.y)) {
-              // Respawn butterfly from screen edge
-              const edge = Math.floor(Math.random() * 4)
-              switch (edge) {
-                case 0: // Top
-                  newX = Math.random() * window.innerWidth
-                  newY = -50
-                  break
-                case 1: // Right
-                  newX = window.innerWidth + 50
-                  newY = Math.random() * window.innerHeight
-                  break
-                case 2: // Bottom
-                  newX = Math.random() * window.innerWidth
-                  newY = window.innerHeight + 50
-                  break
-                case 3: // Left
-                  newX = -50
-                  newY = Math.random() * window.innerHeight
-                  break
-              }
-              newTarget = randomTarget()
-            } else if (dist < 30) {
-              // Set new target when close to current target
-              newTarget = randomTarget()
-            }
-
-            const angle = Math.atan2(newTarget.y - newY, newTarget.x - newX)
-            const deltaAngle = angle - b.prevAngle
-
-            // Rotation jitter when changing direction
-            const newRotationJitter = deltaAngle * 3
-
-            // Flutter faster if turning more
-            const flutterSpeed = 0.08 + Math.abs(deltaAngle) * 2
-            const newFlutterPhase = b.flutterPhase + flutterSpeed
-            const flutterY = Math.sin(newFlutterPhase) * 1.5
-
-            // Move towards target smoothly
-            newX = newX + Math.cos(angle) * b.speed
-            newY = newY + Math.sin(angle) * b.speed + flutterY
-
-            return {
-              ...b,
-              x: newX,
-              y: newY,
-              angle,
-              flutterPhase: newFlutterPhase,  
-              target: newTarget,
-              prevAngle: angle,
-              rotationJitter: newRotationJitter,
-              isVisible: newIsVisible,
-            }
-          })
-        )
         lastTime = currentTime
+
+        butterfliesRef.current.forEach((b, index) => {
+          const domElement = domRefs.current[index]
+          if (!domElement) return
+
+          // Handle spawn delay
+          if (b.spawnDelay > 0) {
+            b.spawnDelay -= frameInterval
+            if (b.spawnDelay > 0) return
+            // Make visible once delay is over
+            domElement.style.opacity = '1'
+          }
+
+          if (!b.isVisible) return
+
+          const dx = b.target.x - b.x
+          const dy = b.target.y - b.y
+          const dist = Math.sqrt(dx * dx + dy * dy)
+
+          let newTarget = b.target
+          let newX = b.x
+          let newY = b.y
+
+          // Check if butterfly is off screen
+          if (isOffScreen(b.x, b.y)) {
+            // Respawn butterfly from screen edge
+            const edge = Math.floor(Math.random() * 4)
+            switch (edge) {
+              case 0: // Top
+                newX = Math.random() * window.innerWidth
+                newY = -50
+                break
+              case 1: // Right
+                newX = window.innerWidth + 50
+                newY = Math.random() * window.innerHeight
+                break
+              case 2: // Bottom
+                newX = Math.random() * window.innerWidth
+                newY = window.innerHeight + 50
+                break
+              case 3: // Left
+                newX = -50
+                newY = Math.random() * window.innerHeight
+                break
+            }
+            newTarget = randomTarget()
+            // Reset position immediately
+            b.x = newX
+            b.y = newY
+            b.target = newTarget
+          } else if (dist < 30) {
+            // Set new target when close to current target
+            b.target = randomTarget()
+          }
+
+          const angle = Math.atan2(b.target.y - b.y, b.target.x - b.x)
+          const deltaAngle = angle - b.prevAngle
+
+          // Rotation jitter
+          b.rotationJitter = deltaAngle * 3
+
+          // Flutter speed
+          const flutterSpeed = 0.08 + Math.abs(deltaAngle) * 2
+          b.flutterPhase += flutterSpeed
+          const flutterY = Math.sin(b.flutterPhase) * 1.5
+
+          // Move
+          b.x += Math.cos(angle) * b.speed
+          b.y += Math.sin(angle) * b.speed + flutterY
+          b.angle = angle
+          b.prevAngle = angle
+
+          // Direct DOM update (High Performance)
+          const rotation = b.angle * (180 / Math.PI) + 90 + b.rotationJitter
+          domElement.style.transform = `translate3d(${b.x}px, ${b.y}px, 0) rotate(${rotation}deg)`
+        })
       }
 
-      animationId = requestAnimationFrame(animate)
+      requestRef.current = requestAnimationFrame(animate)
     }
 
-    animate(0)
+    requestRef.current = requestAnimationFrame(animate)
 
     return () => {
-      if (animationId) {
-        cancelAnimationFrame(animationId)
+      if (requestRef.current) {
+        cancelAnimationFrame(requestRef.current)
       }
     }
   }, [])
 
   return (
     <div className="butterflies-container">
-      {butterflies.map((butterfly) => {
-        // Don't render if still in spawn delay or not visible
-        if (butterfly.spawnDelay > 0 || !butterfly.isVisible) {
-          return null
-        }
-
-        return (
-          <div
-            key={butterfly.id}
-            className="butterfly"
+      {butterflyElements.map((butterfly, index) => (
+        <div
+          key={butterfly.id}
+          ref={(el) => { domRefs.current[index] = el }}
+          className="butterfly"
+          style={{
+            position: 'absolute',
+            left: 0, // Set initial left/top to 0, use translate3d for positioning
+            top: 0,
+            width: butterfly.size,
+            height: butterfly.size,
+            pointerEvents: 'none',
+            zIndex: 15,
+            transformOrigin: 'center center',
+            opacity: 0, // Start hidden, shown by logic
+            transition: 'opacity 0.3s ease-in-out',
+            willChange: 'transform', // Hint to browser
+          }}
+        >
+          <DotLottieReact
+            src={butterfly.lottieSrc}
+            loop
+            autoplay
             style={{
-              position: 'absolute',
-              left: butterfly.x,
-              top: butterfly.y,
-              transform: `rotate(${butterfly.angle * (180 / Math.PI) + 90 + butterfly.rotationJitter}deg)`,
-              width: butterfly.size,
-              height: butterfly.size,
-              pointerEvents: 'none',
-              zIndex: 15,
-              transformOrigin: 'center center',
-              opacity: butterfly.isVisible ? 1 : 0,
-              transition: 'opacity 0.3s ease-in-out',
+              width: '80%',
+              height: '80%',
+              filter: 'drop-shadow(0 2px 4px rgba(212, 175, 55, 0.3))',
             }}
-          >
-            <DotLottieReact
-              src={butterfly.lottieSrc}
-              loop
-              autoplay
-              style={{
-                width: '80%',
-                height: '80%',
-                filter: 'drop-shadow(0 2px 4px rgba(212, 175, 55, 0.3))',
-              }}
-            />
-          </div>
-        )
-      })}
+          />
+        </div>
+      ))}
       <style jsx>{`
         .butterflies-container {
           position: fixed;
           top: 0;
           left: 0;
-          width: 200%;
-          height: 200%;
+          width: 100%;
+          height: 100%;
           pointer-events: none;
           z-index: 15;
           overflow: hidden;
-        }
-        .butterfly {
-          transform-origin: center center;
-          will-change: transform, opacity;
         }
       `}</style>
     </div>

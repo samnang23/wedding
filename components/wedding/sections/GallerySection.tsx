@@ -240,7 +240,7 @@ export const GallerySection = ({ photos, isMobile, videoUrl, onVideoPlay, onVide
   useEffect(() => {
     const video = videoRef.current
     const container = videoContainerRef.current
-    
+
     if (!video || !container || !videoUrl) return
 
     const observer = new IntersectionObserver(
@@ -249,17 +249,17 @@ export const GallerySection = ({ photos, isMobile, videoUrl, onVideoPlay, onVide
           if (entry.isIntersecting) {
             // Video is visible - play it
             wasVisibleRef.current = true
-            
+
             // Don't auto-play if user manually paused
             if (userPausedRef.current) {
               return
             }
-            
+
             // If there's a pending play promise, wait for it or cancel it
             if (playPromiseRef.current) {
               return
             }
-            
+
             // Only play if video is paused
             if (video.paused) {
               const playPromise = video.play()
@@ -283,12 +283,12 @@ export const GallerySection = ({ photos, isMobile, videoUrl, onVideoPlay, onVide
           } else {
             // Video is not visible - pause it
             wasVisibleRef.current = false
-            
+
             // Cancel any pending play promise
             if (playPromiseRef.current) {
               playPromiseRef.current = null
             }
-            
+
             // Only pause if it's currently playing (don't interfere with already paused state)
             if (!video.paused && !video.ended) {
               isPausingRef.current = true
@@ -398,8 +398,6 @@ export const GallerySection = ({ photos, isMobile, videoUrl, onVideoPlay, onVide
                     data-aos-duration={duration}
                     data-aos-easing="ease-out-cubic"
                     data-aos-anchor-placement="top-bottom"
-                    data-aos-once="false"
-                    data-aos-offset="150"
                   >
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
                     <div className="absolute inset-0 border-4 border-[#87b577]/20 group-hover:border-[#87b577]/40 rounded-xl z-20 transition-colors"></div>

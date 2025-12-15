@@ -122,10 +122,9 @@ export const FallingLeaves = () => {
 
   // Animate leaves based on mouse position using requestAnimationFrame (desktop only)
   const animate = (time: number) => {
-    // Skip mouse-based animation on mobile devices
+    // Skip mouse-based animation entirely on mobile devices
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      previousTimeRef.current = time
-      requestRef.current = requestAnimationFrame(animate)
+      // Do not request next frame
       return
     }
 

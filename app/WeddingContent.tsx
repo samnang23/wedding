@@ -632,7 +632,6 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
           className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat bg-fixed"
           style={{
             backgroundImage: "url('/images/pre-wedding/IMG_6068-min.JPG')",
-            filter: "blur(1px)",
             opacity: "0.9",
             height: "100svh",
             width: "100%",
