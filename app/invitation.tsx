@@ -115,7 +115,7 @@ export default function Invitation({ guestName = "ភ្ញៀវជាទីគ
         <div
           className="absolute inset-0 bg-cover bg-center h-[100vh]s bg-fixed "
           style={{
-            backgroundImage: "url('https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6068.JPG')",
+            backgroundImage: "url('https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6068.jpg')",
             filter: "blur(2px) ",
           }}
         />
