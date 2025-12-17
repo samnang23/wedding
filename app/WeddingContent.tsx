@@ -456,41 +456,41 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
   ]
 
   const photos: Photo[] = [
-    { id: 3, src: "/images/pre-wedding/IMG_6056-min.JPG", alt: "Couple Photo 3" },
-    { id: 1, src: "/images/pre-wedding/IMG_6050-min.JPG", alt: "Couple Photo 1" },
-    { id: 2, src: "/images/pre-wedding/IMG_6051-min.JPG", alt: "Couple Photo 2" },
-    { id: 4, src: "/images/pre-wedding/IMG_6063-min.JPG", alt: "Couple Photo 4" },
-    { id: 14, src: "/images/pre-wedding/IMG_6090-min.JPG", alt: "Couple Photo 14" },
-    { id: 5, src: "/images/pre-wedding/IMG_6062-min.JPG", alt: "Couple Photo 5" },
-    { id: 6, src: "/images/pre-wedding/IMG_6066-min.JPG", alt: "Couple Photo 6" },
-    { id: 7, src: "/images/pre-wedding/IMG_6067-min.JPG", alt: "Couple Photo 7" },
-    { id: 8, src: "/images/pre-wedding/IMG_6068-min.JPG", alt: "Couple Photo 8" },
-    { id: 9, src: "/images/pre-wedding/IMG_6075-min.JPG", alt: "Couple Photo 9" },
-    { id: 10, src: "/images/pre-wedding/IMG_6080-min.JPG", alt: "Couple Photo 10" },
-    { id: 11, src: "/images/pre-wedding/IMG_6081-min.JPG", alt: "Couple Photo 11" },
-    { id: 12, src: "/images/pre-wedding/IMG_6085-min.JPG", alt: "Couple Photo 12" },
-    { id: 13, src: "/images/pre-wedding/IMG_6086-min.JPG", alt: "Couple Photo 13" },
-    { id: 15, src: "/images/pre-wedding/IMG_6089-min.JPG", alt: "Couple Photo 15" },
-    { id: 16, src: "/images/pre-wedding/IMG_6091-min.JPG", alt: "Couple Photo 16" },
-    { id: 17, src: "/images/pre-wedding/IMG_6093-min.JPG", alt: "Couple Photo 17" },
-    { id: 18, src: "/images/pre-wedding/IMG_6098-min.JPG", alt: "Couple Photo 18" },
-    { id: 19, src: "/images/pre-wedding/IMG_6099-min.JPG", alt: "Couple Photo 19" },
-    { id: 20, src: "/images/pre-wedding/IMG_6103-min.JPG", alt: "Couple Photo 20" },
-    { id: 21, src: "/images/pre-wedding/IMG_6104-min.JPG", alt: "Couple Photo 21" },
-    { id: 22, src: "/images/pre-wedding/IMG_6106-min.JPG", alt: "Couple Photo 22" },
-    { id: 23, src: "/images/pre-wedding/IMG_6108-min.JPG", alt: "Couple Photo 23" },
-    { id: 24, src: "/images/pre-wedding/IMG_6109-min.JPG", alt: "Couple Photo 24" },
-    { id: 25, src: "/images/pre-wedding/IMG_6112-min.JPG", alt: "Couple Photo 25" },
-    { id: 26, src: "/images/pre-wedding/IMG_6118-min.JPG", alt: "Couple Photo 26" },
-    { id: 27, src: "/images/pre-wedding/IMG_6119-min.JPG", alt: "Couple Photo 27" },
-    { id: 28, src: "/images/pre-wedding/IMG_6122-min.JPG", alt: "Couple Photo 28" },
-    { id: 29, src: "/images/pre-wedding/IMG_6124-min.JPG", alt: "Couple Photo 29" },
-    { id: 30, src: "/images/pre-wedding/IMG_6129-min.JPG", alt: "Couple Photo 30" },
-    { id: 31, src: "/images/pre-wedding/IMG_6131-min.JPG", alt: "Couple Photo 31" },
-    { id: 32, src: "/images/pre-wedding/IMG_6133-min.JPG", alt: "Couple Photo 32" },
-    { id: 33, src: "/images/pre-wedding/IMG_6138-min.JPG", alt: "Couple Photo 33" },
-    { id: 34, src: "/images/pre-wedding/IMG_6142-min.JPG", alt: "Couple Photo 34" },
-    { id: 35, src: "/images/pre-wedding/IMG_6144-min.JPG", alt: "Couple Photo 35" },
+    { id: 3, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6056.jpg", alt: "Couple Photo 3" },
+    { id: 1, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6050.jpg", alt: "Couple Photo 1" },
+    { id: 2, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6051.jpg", alt: "Couple Photo 2" },
+    { id: 4, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6063.jpg", alt: "Couple Photo 4" },
+    { id: 14, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6090.jpg", alt: "Couple Photo 14" },
+    { id: 5, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6062.jpg", alt: "Couple Photo 5" },
+    { id: 6, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6066.jpg", alt: "Couple Photo 6" },
+    { id: 7, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6067.jpg", alt: "Couple Photo 7" },
+    { id: 8, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6068.jpg", alt: "Couple Photo 8" },
+    { id: 9, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6075.jpg", alt: "Couple Photo 9" },
+    { id: 10, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6080.jpg", alt: "Couple Photo 10" },
+    { id: 11, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6081.jpg", alt: "Couple Photo 11" },
+    { id: 12, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6085.jpg", alt: "Couple Photo 12" },
+    { id: 13, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6086.jpg", alt: "Couple Photo 13" },
+    { id: 15, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6089.jpg", alt: "Couple Photo 15" },
+    { id: 16, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6091.jpg", alt: "Couple Photo 16" },
+    { id: 17, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6093.jpg", alt: "Couple Photo 17" },
+    { id: 18, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6098.jpg", alt: "Couple Photo 18" },
+    { id: 19, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6099.jpg", alt: "Couple Photo 19" },
+    { id: 20, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6103.jpg", alt: "Couple Photo 20" },
+    { id: 21, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6104.jpg", alt: "Couple Photo 21" },
+    { id: 22, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6106.jpg", alt: "Couple Photo 22" },
+    { id: 23, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6108.jpg", alt: "Couple Photo 23" },
+    { id: 24, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6109.jpg", alt: "Couple Photo 24" },
+    { id: 25, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6112.jpg", alt: "Couple Photo 25" },
+    { id: 26, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6118.jpg", alt: "Couple Photo 26" },
+    { id: 27, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6119.jpg", alt: "Couple Photo 27" },
+    { id: 28, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6122.jpg", alt: "Couple Photo 28" },
+    { id: 29, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6124.jpg", alt: "Couple Photo 29" },
+    { id: 30, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6129.jpg", alt: "Couple Photo 30" },
+    { id: 31, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6131.jpg", alt: "Couple Photo 31" },
+    { id: 32, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6133.jpg", alt: "Couple Photo 32" },
+    { id: 33, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6138.jpg", alt: "Couple Photo 33" },
+    { id: 34, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6142.jpg", alt: "Couple Photo 34" },
+    { id: 35, src: "https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6144.jpg", alt: "Couple Photo 35" },
   ]
 
 
@@ -577,7 +577,7 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
           left: 0;
           width: 100%;
           height: 100%;
-          background-image: url('/images/pre-wedding/IMG_6068-min.JPG'');
+          background-image: url('https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6068.jpg'');
           background-size: cover;
           background-position: center;
           background-repeat: no-repeat;
@@ -631,7 +631,7 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
         <div
           className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat bg-fixed"
           style={{
-            backgroundImage: "url('/images/pre-wedding/IMG_6068-min.JPG')",
+            backgroundImage: "url('https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6068.jpg')",
             opacity: "0.9",
             height: "100svh",
             width: "100%",
@@ -683,7 +683,7 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
           <GallerySection
             photos={photos}
             isMobile={isMobile}
-            videoUrl="/images/pre-wedding/IMG_0556.MOV"
+            videoUrl="https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/img-0556.mp4"
             onVideoPlay={handleVideoPlay}
             onVideoPause={handleVideoPause}
             onVideoEnd={handleVideoEnd}
