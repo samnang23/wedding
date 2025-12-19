@@ -5,16 +5,16 @@ import { ThemeProvider } from "@/components/theme-provider"
 
 export const metadata = {
   title: "Samnag ♥️ Rosa",
-    openGraph: {
-      images: [
-        {
-          url: 'https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6050.JPG',
-          width: 1200,
-          height: 630,
-          alt: 'Samnag ♥️ Rosa',
-        },
-      ],
-    },
+  openGraph: {
+    images: [
+      {
+        url: 'https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6050.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Samnag ♥️ Rosa',
+      },
+    ],
+  },
 }
 
 export default function RootLayout({
@@ -31,8 +31,8 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Moul&family=Moulpali&family=Hanuman:wght@100;300;400;700;900&display=swap"
           rel="stylesheet"
         />
-        <link href="https://fonts.googleapis.com/css2?family=Koulen&display=swap" rel="stylesheet"/>
-        <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet"/>
+        <link href="https://fonts.googleapis.com/css2?family=Koulen&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet" />
         <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
       </head>
       <body>
