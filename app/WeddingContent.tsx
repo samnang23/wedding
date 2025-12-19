@@ -683,7 +683,8 @@ export default function WeddingContent({ guestNameFromInvitation, guestShortIdFr
           <GallerySection
             photos={photos}
             isMobile={isMobile}
-            videoUrl="https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/img-0556.mp4"
+            video1Url="https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/img-0556.mp4"
+            video2Url="http://bucket.yaikh.com/images/samang/IMG_0822.MOV"
             onVideoPlay={handleVideoPlay}
             onVideoPause={handleVideoPause}
             onVideoEnd={handleVideoEnd}

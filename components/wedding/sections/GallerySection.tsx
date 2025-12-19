@@ -11,7 +11,8 @@ import type { Photo } from "@/types/wedding"
 interface GallerySectionProps {
   photos: Photo[]
   isMobile: boolean
-  videoUrl?: string // Optional video URL to display at the top
+  video1Url?: string // Optional first video URL
+  video2Url?: string // Optional second video URL
   onVideoPlay?: () => void // Callback when video starts playing
   onVideoPause?: () => void // Callback when video pauses
   onVideoEnd?: () => void // Callback when video ends
@@ -205,74 +206,68 @@ const ImageZoomDialog = ({ photo, children }: ImageZoomDialogProps) => {
   )
 }
 
-export const GallerySection = ({ photos, isMobile, videoUrl, onVideoPlay, onVideoPause, onVideoEnd }: GallerySectionProps) => {
+// VideoPlayer component to handle individual video playback
+interface VideoPlayerProps {
+  videoUrl: string
+  onVideoPlay?: () => void
+  onVideoPause?: () => void
+  onVideoEnd?: () => void
+}
+
+const VideoPlayer = ({ videoUrl, onVideoPlay, onVideoPause, onVideoEnd }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const videoContainerRef = useRef<HTMLDivElement>(null)
-  const userPausedRef = useRef(false) // Track if user manually paused
-  const wasVisibleRef = useRef(false) // Track if video was previously visible
-  const playPromiseRef = useRef<Promise<void> | null>(null) // Track pending play promise
-  const isPausingRef = useRef(false) // Track if we're currently pausing
+  const userPausedRef = useRef(false)
+  const wasVisibleRef = useRef(false)
+  const playPromiseRef = useRef<Promise<void> | null>(null)
+  const isPausingRef = useRef(false)
 
   const handleVideoPlay = () => {
-    // If video starts playing, clear the manual pause flag
     userPausedRef.current = false
     onVideoPlay?.()
   }
 
   const handleVideoPause = () => {
-    // Check if pause was user-initiated (only if video is currently visible)
     const video = videoRef.current
     if (video && wasVisibleRef.current && !video.ended && !isPausingRef.current) {
-      // This is likely a user action if video is visible and we're not programmatically pausing
       userPausedRef.current = true
     }
-    isPausingRef.current = false // Reset pause flag
+    isPausingRef.current = false
     onVideoPause?.()
   }
 
   const handleVideoEnd = () => {
-    userPausedRef.current = false // Reset when video ends
-    playPromiseRef.current = null // Clear play promise
+    userPausedRef.current = false
+    playPromiseRef.current = null
     onVideoEnd?.()
   }
 
-  // Auto-play video when it enters viewport, pause when it leaves
   useEffect(() => {
     const video = videoRef.current
     const container = videoContainerRef.current
 
-    if (!video || !container || !videoUrl) return
+    if (!video || !container) return
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            // Video is visible - play it
             wasVisibleRef.current = true
 
-            // Don't auto-play if user manually paused
-            if (userPausedRef.current) {
+            if (userPausedRef.current || playPromiseRef.current) {
               return
             }
 
-            // If there's a pending play promise, wait for it or cancel it
-            if (playPromiseRef.current) {
-              return
-            }
-
-            // Only play if video is paused
             if (video.paused) {
               const playPromise = video.play()
               if (playPromise !== undefined) {
                 playPromiseRef.current = playPromise
                 playPromise
                   .then(() => {
-                    // Successfully started playing, clear user pause flag
                     userPausedRef.current = false
                     playPromiseRef.current = null
                   })
                   .catch((error) => {
-                    // Handle AbortError gracefully (play was interrupted)
                     if (error.name !== 'AbortError') {
                       console.log("Auto-play prevented:", error)
                     }
@@ -281,26 +276,21 @@ export const GallerySection = ({ photos, isMobile, videoUrl, onVideoPlay, onVide
               }
             }
           } else {
-            // Video is not visible - pause it
             wasVisibleRef.current = false
 
-            // Cancel any pending play promise
             if (playPromiseRef.current) {
               playPromiseRef.current = null
             }
 
-            // Only pause if it's currently playing (don't interfere with already paused state)
             if (!video.paused && !video.ended) {
               isPausingRef.current = true
               try {
                 video.pause()
               } catch (error: any) {
-                // Handle any pause errors gracefully
                 if (error?.name !== 'AbortError') {
                   console.log("Pause error:", error)
                 }
               } finally {
-                // Reset pause flag after a short delay to allow pause event to fire
                 setTimeout(() => {
                   isPausingRef.current = false
                 }, 100)
@@ -310,7 +300,7 @@ export const GallerySection = ({ photos, isMobile, videoUrl, onVideoPlay, onVide
         })
       },
       {
-        threshold: 0.5, // Trigger when 50% of video is visible
+        threshold: 0.5,
         rootMargin: '0px'
       }
     )
@@ -319,11 +309,29 @@ export const GallerySection = ({ photos, isMobile, videoUrl, onVideoPlay, onVide
 
     return () => {
       observer.disconnect()
-      // Clean up any pending promises
       playPromiseRef.current = null
       isPausingRef.current = false
     }
   }, [videoUrl])
+
+  return (
+    <div ref={videoContainerRef} className="mb-6">
+      <video
+        ref={videoRef}
+        className="w-full max-w-3xl mx-auto rounded-lg shadow-lg"
+        controls
+        src={videoUrl}
+        onPlay={handleVideoPlay}
+        onPause={handleVideoPause}
+        onEnded={handleVideoEnd}
+        playsInline
+        muted={false}
+      />
+    </div>
+  )
+}
+
+export const GallerySection = ({ photos, isMobile, video1Url, video2Url, onVideoPlay, onVideoPause, onVideoEnd }: GallerySectionProps) => {
 
   return (
     <section id="gallery" className="py-12 sm:py-16 relative w-full">
@@ -346,20 +354,25 @@ export const GallerySection = ({ photos, isMobile, videoUrl, onVideoPlay, onVide
           <div className="h-[1px] bg-[#2c5e1a]/30 w-12 sm:w-16"></div>
         </div>
 
-        {/* Video at the top */}
-        {videoUrl && (
-          <div ref={videoContainerRef} className="mb-10">
-            <video
-              ref={videoRef}
-              className="w-full max-w-3xl mx-auto rounded-lg"
-              controls
-              src={videoUrl}
-              onPlay={handleVideoPlay}
-              onPause={handleVideoPause}
-              onEnded={handleVideoEnd}
-              playsInline
-              muted={false}
-            ></video>
+        {/* Videos at the top - displayed vertically */}
+        {(video1Url || video2Url) && (
+          <div className="mb-10 flex flex-col gap-6">
+            {video1Url && (
+              <VideoPlayer
+                videoUrl={video1Url}
+                onVideoPlay={onVideoPlay}
+                onVideoPause={onVideoPause}
+                onVideoEnd={onVideoEnd}
+              />
+            )}
+            {video2Url && (
+              <VideoPlayer
+                videoUrl={video2Url}
+                onVideoPlay={onVideoPlay}
+                onVideoPause={onVideoPause}
+                onVideoEnd={onVideoEnd}
+              />
+            )}
           </div>
         )}
 
