@@ -8,7 +8,7 @@ export const metadata = {
   openGraph: {
     images: [
       {
-        url: 'https://vikscgtwiijhraguifvg.supabase.co/storage/v1/object/public/upload/wedding/IMG_6050.jpg',
+        url: '/images/pre-wedding/IMG_6050-min.JPG',
         width: 1200,
         height: 630,
         alt: 'Samnag ♥️ Rosa',
